@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 22px;
 
   h1 {
     margin: 0;
@@ -22,6 +22,7 @@
     margin: 4px 0 0;
     font-size: 14px;
     opacity: 0.85;
+    color: #cbd5f5;
   }
 
   button {
@@ -31,17 +32,15 @@
     box-shadow: 0 0 18px rgba(80, 140, 255, 0.6);
   }
 
-  mat-icon {
-    margin-right: 4px;
-  }
+  mat-icon { margin-right: 4px; }
 }
 
 /* KPIs */
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 14px;
+  margin-bottom: 22px;
 }
 
 .kpi-card {
@@ -51,7 +50,7 @@
   color: #f9fbff;
 
   .kpi-label {
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     opacity: 0.8;
@@ -64,29 +63,21 @@
   }
 }
 
-.kpi-total {
-  background: linear-gradient(135deg, #1c2333, #252b3f);
-}
+.kpi-total { background: linear-gradient(135deg, #1c2333, #252b3f); }
+.kpi-pendientes { background: linear-gradient(135deg, #2845ff, #6a8dff); }
+.kpi-completadas { background: linear-gradient(135deg, #21c98b, #6df3b7); }
 
-.kpi-pendientes {
-  background: linear-gradient(135deg, #2845ff, #6a8dff);
-}
-
-.kpi-completadas {
-  background: linear-gradient(135deg, #21c98b, #6df3b7);
-}
-
-/* NUEVA TAREA */
+/* FORM NUEVA */
 .new-task-card {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   border-radius: 18px;
   padding: 16px 18px;
   background: rgba(10, 15, 50, 0.95);
   color: #f9fbff;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6);
 
   h2 {
-    margin-top: 0;
-    margin-bottom: 12px;
+    margin: 0 0 10px;
     font-size: 18px;
   }
 }
@@ -99,7 +90,7 @@
 
 .full-width {
   width: 100%;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .new-task-actions {
@@ -108,17 +99,15 @@
   justify-content: flex-end;
   gap: 8px;
 
-  button {
-    border-radius: 999px;
-  }
+  button { border-radius: 999px; }
 }
 
-/* TABS + LISTA */
+/* LISTA + TABS */
 .tabs-card {
   border-radius: 18px;
   padding: 16px 18px 8px;
   background: rgba(8, 12, 38, 0.98);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.7);
 }
 
 .tabs-header {
@@ -135,24 +124,28 @@
 
   .tab-active {
     background: linear-gradient(135deg, #8b5cff, #ff5fd1);
-    color: #ffffff;
+    color: #fff;
     box-shadow: 0 0 15px rgba(153, 102, 255, 0.7);
   }
 }
 
-/* TARJETAS DE TAREA */
+/* TARJETA TAREA */
 .task-row {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 12px 4px;
+  padding: 12px 10px;
   margin-bottom: 10px;
   border-radius: 14px;
   background: rgba(18, 25, 60, 0.85);
+  transition: 0.15s ease;
 
-  .task-main {
-    flex: 1;
+  &:hover {
+    transform: translateY(-1px);
+    background: rgba(24, 32, 72, 0.9);
   }
+
+  .task-main { flex: 1; }
 
   .task-title {
     font-size: 15px;
@@ -179,45 +172,29 @@
     opacity: 0.9;
   }
 
-  .due-date {
-    opacity: 0.85;
-  }
+  .due-date { opacity: 0.85; }
 }
 
 .task-row--completed {
   background: rgba(16, 40, 32, 0.85);
 }
 
-.task-check {
-  margin-top: 4px;
-}
+.task-check { margin-top: 4px; }
 
 /* PRIORIDAD */
 .priority-chip {
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.priority--alta {
-  background: rgba(255, 94, 122, 0.14);
-  color: #ff8ba3;
-}
+.priority--alta { background: rgba(255, 94, 122, 0.14); color: #ff8ba3; }
+.priority--media { background: rgba(255, 193, 112, 0.16); color: #ffd27f; }
+.priority--baja { background: rgba(120, 220, 255, 0.14); color: #86e3ff; }
 
-.priority--media {
-  background: rgba(255, 193, 112, 0.16);
-  color: #ffd27f;
-}
-
-.priority--baja {
-  background: rgba(120, 220, 255, 0.14);
-  color: #86e3ff;
-}
-
-/* SIN DATOS */
 .empty {
   padding: 16px 4px 8px;
   font-size: 13px;
@@ -226,17 +203,9 @@
 
 /* RESPONSIVE */
 @media (max-width: 960px) {
-  .tasks-page {
-    padding: 16px;
-  }
-
-  .kpi-row {
-    grid-template-columns: 1fr;
-  }
-
-  .new-task-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+  .tasks-page { padding: 16px; }
+  .kpi-row { grid-template-columns: 1fr; }
+  .new-task-grid { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 600px) {
@@ -244,14 +213,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
-
-    button {
-      align-self: stretch;
-      justify-content: center;
-    }
+    button { align-self: stretch; justify-content: center; }
   }
-
-  .new-task-grid {
-    grid-template-columns: 1fr;
-  }
+  .new-task-grid { grid-template-columns: 1fr; }
 }

@@ -16,8 +16,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 
 import { TareasService } from '../../services/tareas.service';
 import { UsuariosService } from '../../services/usuarios.service';
-import { TareaDTO, UsuarioDTO } from '../../models/dtos';
-import { EstadoTarea, Prioridad } from '../../models/enums';
+import { TareaDTO } from '../../models/dtos';
+import { Prioridad } from '../../models/enums';
 
 @Component({
   standalone: true,
@@ -46,24 +46,22 @@ export class TareasPageComponent implements OnInit {
   private usuariosSrv = inject(UsuariosService);
   private snack = inject(MatSnackBar);
 
-  usuarioId = this.usuariosSrv.getUsuarioId();
+  usuarioId: number | null = null;
 
-  // Todas las tareas desde el backend
+  // Todas las tareas del usuario logueado
   tareas = signal<TareaDTO[]>([]);
 
   // Tab actual
   tab: 'ACTIVAS' | 'COMPLETADAS' = 'ACTIVAS';
 
-  // Controla si se muestra el formulario de nueva tarea
-  showForm = false;
-
   // Formulario de nueva tarea
+  showForm = false;
   form: {
     titulo: string;
     descripcion: string;
     prioridad: Prioridad;
     fechaVenc: Date;
-    duracion: number;
+    duracion: number; // minutos
   } = {
     titulo: '',
     descripcion: '',
@@ -75,12 +73,22 @@ export class TareasPageComponent implements OnInit {
   readonly PRIORIDADES: Prioridad[] = ['BAJA', 'MEDIA', 'ALTA'];
 
   ngOnInit(): void {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
     this.cargar();
   }
 
   // ===== Carga =====
   cargar() {
-    this.tareasSrv.listar().subscribe(list => this.tareas.set(list));
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+    if (!this.usuarioId) {
+      this.tareas.set([]);
+      return;
+    }
+
+    this.tareasSrv.listar().subscribe(list => {
+      const mias = list.filter(t => t.usuario?.id === this.usuarioId);
+      this.tareas.set(mias);
+    });
   }
 
   // ===== KPIs =====
@@ -105,7 +113,41 @@ export class TareasPageComponent implements OnInit {
     return this.tareas().filter(t => t.estado === 'COMPLETADA');
   }
 
-  // ===== Crear tarea =====
+  // ===== UI =====
+  cambiarTab(tab: 'ACTIVAS' | 'COMPLETADAS') {
+    this.tab = tab;
+  }
+
+  abrirNueva() {
+    this.showForm = true;
+    this.form = {
+      titulo: '',
+      descripcion: '',
+      prioridad: 'MEDIA',
+      fechaVenc: new Date(),
+      duracion: 60
+    };
+  }
+
+  cancelarNueva() {
+    this.showForm = false;
+    this.form = {
+      titulo: '',
+      descripcion: '',
+      prioridad: 'MEDIA',
+      fechaVenc: new Date(),
+      duracion: 60
+    };
+  }
+
+  // Cambio desde el input type="date"
+  onFechaChange(value: string | null) {
+    if (value) {
+      this.form.fechaVenc = new Date(value);
+    }
+  }
+
+  // ===== Crear / actualizar estado =====
   guardarNueva() {
     if (!this.usuarioId) {
       this.snack.open('Selecciona/crea un usuario primero', 'OK', { duration: 2000 });
@@ -116,40 +158,27 @@ export class TareasPageComponent implements OnInit {
       titulo: this.form.titulo.trim(),
       descripcion: this.form.descripcion?.trim(),
       prioridad: this.form.prioridad,
-      fechaVencimiento: this.form.fechaVenc.toISOString(),
-      usuario: { id: this.usuarioId } as UsuarioDTO,
-      duracionEstimadaMinutos: this.form.duracion
+      fechaVencimiento: this.form.fechaVenc.toISOString().substring(0, 10),
+      usuario: { id: this.usuarioId }
     };
 
-    if (!dto.titulo) return;
+    if (!dto.titulo) {
+      this.snack.open('El título es obligatorio', 'OK', { duration: 2000 });
+      return;
+    }
 
     this.tareasSrv.crear(dto).subscribe({
       next: () => {
         this.snack.open('Tarea creada', 'OK', { duration: 1500 });
-        this.form = {
-          titulo: '',
-          descripcion: '',
-          prioridad: 'MEDIA',
-          fechaVenc: new Date(),
-          duracion: 60
-        };
-        this.showForm = false;
+        this.cancelarNueva();
         this.cargar();
       },
       error: () => this.snack.open('No se pudo crear la tarea', 'OK', { duration: 2000 })
     });
   }
 
-  // Cambio desde el input type="date"
-  onFechaChange(value: string | null) {
-    if (value) {
-      this.form.fechaVenc = new Date(value);
-    }
-  }
-
-  // ===== Acciones sobre tareas =====
-  toggleComplete(t: TareaDTO) {
-    // Solo completar, no regresamos a pendiente
+  completar(t: TareaDTO) {
+    // Solo completamos si no está ya completada
     if (!t.id || t.estado === 'COMPLETADA') return;
 
     this.tareasSrv.completar(t.id).subscribe(() => {

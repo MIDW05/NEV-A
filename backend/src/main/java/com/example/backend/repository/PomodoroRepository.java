@@ -1,17 +1,20 @@
 package com.example.backend.repository;
 
 import com.example.backend.entity.PomodoroSesionEntity;
+import com.example.backend.enums.EstadoPomodoro;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
-@Repository
 public interface PomodoroRepository extends JpaRepository<PomodoroSesionEntity, Long> {
 
-    // Buscar pomodoros por tareaId
+    List<PomodoroSesionEntity> findByUsuarioId(Long usuarioId);
+
     List<PomodoroSesionEntity> findByTareaId(Long tareaId);
 
-    // Buscar pomodoros por usuarioId
-    List<PomodoroSesionEntity> findByUsuarioId(Long usuarioId);
+    Optional<PomodoroSesionEntity> findFirstByUsuarioIdAndEstado(Long usuarioId, EstadoPomodoro estado);
+
+    List<PomodoroSesionEntity> findByUsuarioIdAndInicioBetween(Long usuarioId, Date desde, Date hasta);
 }

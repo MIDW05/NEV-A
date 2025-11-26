@@ -134,6 +134,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.stopTick();
   }
+  tiempoRestante(): string {
+    const total = this.restanteSeg();
+    const min = Math.floor(total / 60);
+    const seg = total % 60;
+    const mm = min.toString().padStart(2, '0');
+    const ss = seg.toString().padStart(2, '0');
+    return `${mm}:${ss}`;
+  }
 
   logout() {
     this.usuariosSrv.logout();
@@ -142,6 +150,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // --- MÉTRICAS DEL DASHBOARD ---
 
+  // --- MÉTRICAS DEL DASHBOARD ---
   private cargarMetricas() {
     if (!this.usuarioId) return;
     const uid = this.usuarioId;
@@ -193,12 +202,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.actividadReciente.set(recientes);
     });
 
-    // PROYECTOS
+    // PROYECTOS (solo del usuario)
     this.proyectosSrv.listar().subscribe(p => {
-      this.proyectosActivos.set(p.length);
-      if (p.length) {
+      const propios = p.filter(pr => (pr as any).usuario?.id === uid);
+      this.proyectosActivos.set(propios.length);
+      if (propios.length) {
         const act = this.actividadReciente();
-        const ultimo = p[p.length - 1];
+        const ultimo = propios[propios.length - 1];
         this.actividadReciente.set([
           ...act,
           { texto: `Creaste el proyecto "${ultimo.nombre}"`, detalle: 'Recientemente' }
@@ -206,16 +216,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     });
 
-    // METAS
+    // METAS (solo del usuario)
     this.metasSrv.listar().subscribe(m => {
-      this.metasEnProgreso.set(m.length);
+      const propias = m.filter(mt => (mt as any).usuario?.id === uid);
+      this.metasEnProgreso.set(propias.length);
     });
 
-    // HÁBITOS (los que has configurado)
+    // HÁBITOS (solo del usuario)
     this.habitosSrv.listar().subscribe(h => {
-      this.habitosConfigurados.set(h.length);
+      const propios = h.filter(hb => (hb as any).usuario?.id === uid);
+      this.habitosConfigurados.set(propios.length);
     });
   }
+
 
   // --- Tareas / calendario originales ---
 

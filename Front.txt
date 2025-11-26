@@ -1,0 +1,4228 @@
+# Export consolidado — 2025-11-26T13:32:55.064882
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\app.config.ts
+Carpeta: .
+Archivo: app.config.ts
+Extensión: .ts
+Tamaño: 702.0 B
+--------------------------------------------------------------------------------
+import { ApplicationConfig } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
+import { provideZoneChangeDetection } from '@angular/core';
+import { provideClientHydration } from '@angular/platform-browser';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideHttpClient } from '@angular/common/http';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes),
+    provideClientHydration(),
+    provideAnimationsAsync(),
+    provideHttpClient(), // 👈 necesario para HttpClient
+  ],
+};
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\app.html
+Carpeta: .
+Archivo: app.html
+Extensión: .html
+Tamaño: 35.0 B
+--------------------------------------------------------------------------------
+<router-outlet></router-outlet>
+
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\app.routes.ts
+Carpeta: .
+Archivo: app.routes.ts
+Extensión: .ts
+Tamaño: 1.6 KB
+--------------------------------------------------------------------------------
+import { Routes } from '@angular/router';
+
+import { LoginComponent } from './components/login/login';
+import { RegisterComponent } from './components/register/register';
+import { DashboardComponent } from './components/dashboard/dashboard';
+import { authGuard } from './auth.guard';
+import {LayoutComponent} from './components/layout/layout';
+import {TareasPageComponent} from './components/tareas-page/tareas-page';
+import {ProyectosPageComponent} from './components/proyectos-page/proyectos-page';
+import {NotasPageComponent} from './components/notas-page/notas-page';
+import {MetasPageComponent} from './components/metas-page/metas-page';
+import {HabitosPageComponent} from './components/habitos-page/habitos-page';
+import {UsuariosPageComponent} from './components/usuarios-page/usuarios-page';
+
+export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+
+  {
+    path: 'app',
+    component: LayoutComponent,
+    canMatch: [authGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: DashboardComponent },
+
+      { path: 'tareas', component: TareasPageComponent },
+      { path: 'proyectos', component: ProyectosPageComponent },
+      { path: 'notas', component: NotasPageComponent },
+      { path: 'metas', component: MetasPageComponent },
+      { path: 'habitos', component: HabitosPageComponent },
+      { path: 'usuarios', component: UsuariosPageComponent },
+    ]
+  },
+
+  { path: '**', redirectTo: 'login' }
+];
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\app.scss
+Carpeta: .
+Archivo: app.scss
+Extensión: .scss
+Tamaño: 0.0 B
+--------------------------------------------------------------------------------
+
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\app.spec.ts
+Carpeta: .
+Archivo: app.spec.ts
+Extensión: .ts
+Tamaño: 689.0 B
+--------------------------------------------------------------------------------
+import { TestBed } from '@angular/core/testing';
+import { App } from './app';
+
+describe('App', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+    }).compileComponents();
+  });
+
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
+  it('should render title', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, frontend');
+  });
+});
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\app.ts
+Carpeta: .
+Archivo: app.ts
+Extensión: .ts
+Tamaño: 451.0 B
+--------------------------------------------------------------------------------
+import { Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import {MatButtonModule} from '@angular/material/button';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet, MatIconModule, MatButtonModule],
+  templateUrl: './app.html',
+  styleUrl: './app.scss'
+})
+export class App {
+  protected readonly title = signal('frontend');
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\auth.guard.ts
+Carpeta: .
+Archivo: auth.guard.ts
+Extensión: .ts
+Tamaño: 393.0 B
+--------------------------------------------------------------------------------
+import { CanMatchFn, Router } from '@angular/router';
+import { inject } from '@angular/core';
+import { UsuariosService } from './services/usuarios.service';
+
+export const authGuard: CanMatchFn = () => {
+  const router = inject(Router);
+  const usuariosSrv = inject(UsuariosService);
+  const ok = !!usuariosSrv.getUsuarioId();
+  if (!ok) router.navigate(['/login']);
+  return ok;
+};
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\models\dtos.ts
+Carpeta: models
+Archivo: dtos.ts
+Extensión: .ts
+Tamaño: 2.1 KB
+--------------------------------------------------------------------------------
+import { EstadoTarea, Prioridad, TipoIntervalo, TipoMeta } from './enums';
+
+export interface UsuarioDTO {
+  id?: number;
+  nombre: string;
+  email: string;
+  contrasena: string;
+  fechaCreacion?: string;
+}
+
+/**
+ * Tarea principal del sistema.
+ * El backend puede enviar más campos, pero estos son los que usamos en el front.
+ */
+export interface TareaDTO {
+  id?: number;
+  titulo: string;
+  descripcion?: string;
+  prioridad: Prioridad;
+  // ISO string que viene del backend (yyyy-MM-dd o completo con hora)
+  fechaVencimiento: string;
+
+  // Relación con usuario (solo usamos id)
+  usuario?: Partial<UsuarioDTO>;
+
+  estado?: EstadoTarea;
+  fechaCreacion?: string;
+  fechaInicio?: string;
+  fechaFinalizacion?: string;
+  duracionEstimadaMinutos?: number;
+
+  // Opcionalmente puedes tener proyecto, pero el front lo puede ignorar si no lo usas
+  proyectoId?: number;
+}
+
+/**
+ * Evento de calendario generado desde las tareas.
+ */
+export interface CalendarItemDTO {
+  tareaId: number;
+  titulo: string;
+  inicio: string; // ISO
+  fin: string;    // ISO
+}
+
+/**
+ * Sesión de Pomodoro que viene del backend.
+ */
+export interface PomodoroDTO {
+  id: number;
+  usuarioId: number;
+  tareaId?: number;
+  tipo: TipoIntervalo;
+  inicio: string;
+  finPlanificado: string;
+  finReal?: string;
+  duracionMin: number;
+  activo: boolean;
+}
+
+/**
+ * Proyecto de usuario.
+ */
+export interface ProyectoDTO {
+  id?: number;
+  nombre: string;
+  descripcion?: string;
+  usuario?: Partial<UsuarioDTO>;
+}
+
+/**
+ * Nota suelta del usuario (no necesariamente ligada a tarea).
+ */
+export interface NotaDTO {
+  id?: number;
+  titulo: string;
+  categoria: string;
+  contenido: string;
+  usuario?: Partial<UsuarioDTO>;
+}
+
+/**
+ * Hábito del usuario.
+ */
+export interface HabitoDTO {
+  id?: number;
+  nombre: string;
+  usuario?: Partial<UsuarioDTO>;
+}
+
+/**
+ * Meta del usuario.
+ */
+export interface MetaDTO {
+  id?: number;
+  titulo: string;
+  descripcion: string;
+  tipoMeta: TipoMeta;
+  fechaLimite?: string; // ISO (opcional)
+  usuario?: Partial<UsuarioDTO>;
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\models\enums.ts
+Carpeta: models
+Archivo: enums.ts
+Extensión: .ts
+Tamaño: 288.0 B
+--------------------------------------------------------------------------------
+export type Prioridad = 'BAJA' | 'MEDIA' | 'ALTA';
+export type EstadoTarea = 'PENDIENTE' | 'EN_CURSO' | 'COMPLETADA' | 'VENCIDA';
+export type TipoIntervalo = 'ENFOQUE' | 'DESCANSO_CORTO' | 'DESCANSO_LARGO';
+export type TipoMeta = 'SALUD' | 'APRENDIZAJE' | 'PERSONAL' | 'PROFESIONAL';
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\services\habitos.service.ts
+Carpeta: services
+Archivo: habitos.service.ts
+Extensión: .ts
+Tamaño: 801.0 B
+--------------------------------------------------------------------------------
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
+import { HabitoDTO } from '../models/dtos';
+
+@Injectable({ providedIn: 'root' })
+export class HabitosService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/habitos`;
+
+  listar(): Observable<HabitoDTO[]> { return this.http.get<HabitoDTO[]>(this.base); }
+  crear(dto: HabitoDTO): Observable<HabitoDTO> { return this.http.post<HabitoDTO>(this.base, dto); }
+  editar(dto: HabitoDTO): Observable<HabitoDTO> { return this.http.put<HabitoDTO>(this.base, dto); }
+  borrar(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/${id}`); }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\services\metas.service.ts
+Carpeta: services
+Archivo: metas.service.ts
+Extensión: .ts
+Tamaño: 804.0 B
+--------------------------------------------------------------------------------
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
+import { MetaDTO } from '../models/dtos';
+
+@Injectable({ providedIn: 'root' })
+export class MetasService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/metas`;
+
+  listar(): Observable<MetaDTO[]> { return this.http.get<MetaDTO[]>(this.base); }
+  crear(dto: MetaDTO): Observable<MetaDTO> { return this.http.post<MetaDTO>(this.base, dto); }
+  editar(dto: MetaDTO): Observable<MetaDTO> {
+    return this.http.put<MetaDTO>(`${this.base}/${dto.id}`, dto);
+  }
+
+  borrar(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/${id}`); }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\services\notas.service.ts
+Carpeta: services
+Archivo: notas.service.ts
+Extensión: .ts
+Tamaño: 779.0 B
+--------------------------------------------------------------------------------
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
+import { NotaDTO } from '../models/dtos';
+
+@Injectable({ providedIn: 'root' })
+export class NotasService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/notas`;
+
+  listar(): Observable<NotaDTO[]> { return this.http.get<NotaDTO[]>(this.base); }
+  crear(dto: NotaDTO): Observable<NotaDTO> { return this.http.post<NotaDTO>(this.base, dto); }
+  editar(dto: NotaDTO): Observable<NotaDTO> { return this.http.put<NotaDTO>(this.base, dto); }
+  borrar(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/${id}`); }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\services\pomodoro.service.ts
+Carpeta: services
+Archivo: pomodoro.service.ts
+Extensión: .ts
+Tamaño: 1.6 KB
+--------------------------------------------------------------------------------
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
+import { PomodoroDTO } from '../models/dtos';
+import { TipoIntervalo } from '../models/enums';
+
+@Injectable({ providedIn: 'root' })
+export class PomodoroService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/pomodoro`;
+
+  iniciar(usuarioId: number, tipo: TipoIntervalo, tareaId?: number, duracionMin?: number): Observable<PomodoroDTO> {
+    let params = new HttpParams()
+      .set('usuarioId', usuarioId)
+      .set('tipo', tipo);
+    if (tareaId) params = params.set('tareaId', tareaId);
+    if (duracionMin) params = params.set('duracionMin', duracionMin);
+    return this.http.post<PomodoroDTO>(`${this.base}/iniciar`, {}, { params });
+  }
+
+  finalizar(sesionId: number): Observable<PomodoroDTO> {
+    return this.http.post<PomodoroDTO>(`${this.base}/${sesionId}/finalizar`, {});
+  }
+
+  activo(usuarioId: number): Observable<PomodoroDTO | null> {
+    const params = new HttpParams().set('usuarioId', usuarioId);
+    return this.http.get<PomodoroDTO | null>(`${this.base}/activo`, { params });
+  }
+
+  hoy(usuarioId: number): Observable<PomodoroDTO[]> {
+    const params = new HttpParams().set('usuarioId', usuarioId);
+    return this.http.get<PomodoroDTO[]>(`${this.base}/hoy`, { params });
+  }
+
+  plan(): Observable<Array<{ orden: number; tipo: TipoIntervalo; minutos: number }>> {
+    return this.http.get<Array<{ orden: number; tipo: TipoIntervalo; minutos: number }>>(`${this.base}/plan`);
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\services\proyectos.service.ts
+Carpeta: services
+Archivo: proyectos.service.ts
+Extensión: .ts
+Tamaño: 823.0 B
+--------------------------------------------------------------------------------
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
+import { ProyectoDTO } from '../models/dtos';
+
+@Injectable({ providedIn: 'root' })
+export class ProyectosService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/proyectos`;
+
+  listar(): Observable<ProyectoDTO[]> { return this.http.get<ProyectoDTO[]>(this.base); }
+  crear(dto: ProyectoDTO): Observable<ProyectoDTO> { return this.http.post<ProyectoDTO>(this.base, dto); }
+  editar(dto: ProyectoDTO): Observable<ProyectoDTO> { return this.http.put<ProyectoDTO>(this.base, dto); }
+  borrar(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/${id}`); }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\services\tareas.service.ts
+Carpeta: services
+Archivo: tareas.service.ts
+Extensión: .ts
+Tamaño: 2.4 KB
+--------------------------------------------------------------------------------
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { CalendarItemDTO, TareaDTO } from '../models/dtos';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class TareasService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/tareas`;
+
+  listar(): Observable<TareaDTO[]> {
+    return this.http.get<TareaDTO[]>(this.base);
+}
+
+  crear(dto: TareaDTO): Observable<TareaDTO> {
+    return this.http.post<TareaDTO>(this.base, dto);
+  }
+
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  pendientes(usuarioId: number): Observable<TareaDTO[]> {
+    const params = new HttpParams().set('usuarioId', usuarioId);
+    return this.http.get<TareaDTO[]>(`${this.base}/pendientes`, { params });
+  }
+
+  proximas(usuarioId: number, dias = 3): Observable<TareaDTO[]> {
+    const params = new HttpParams().set('usuarioId', usuarioId).set('dias', dias);
+    return this.http.get<TareaDTO[]>(`${this.base}/proximas`, { params });
+  }
+
+  recordatorios(usuarioId: number, minutos = 60): Observable<TareaDTO[]> {
+    const params = new HttpParams().set('usuarioId', usuarioId).set('minutos', minutos);
+    return this.http.get<TareaDTO[]>(`${this.base}/recordatorios`, { params });
+  }
+
+  iniciar(id: number): Observable<TareaDTO> {
+    return this.http.post<TareaDTO>(`${this.base}/${id}/iniciar`, {});
+  }
+
+  completar(id: number): Observable<TareaDTO> {
+    return this.http.post<TareaDTO>(`${this.base}/${id}/completar`, {});
+  }
+
+  calendario(usuarioId: number, desdeYYYYMMDD: string, hastaYYYYMMDD: string): Observable<CalendarItemDTO[]> {
+    const params = new HttpParams()
+      .set('usuarioId', usuarioId)
+      .set('desde', desdeYYYYMMDD)
+      .set('hasta', hastaYYYYMMDD);
+    return this.http.get<CalendarItemDTO[]>(`${this.base}/calendario`, { params });
+  }
+
+  icsUrl(usuarioId: number, minutosBloque = 30): string {
+    return `${environment.apiUrl}/calendar/usuario/${usuarioId}.ics?minutosBloqueEvento=${minutosBloque}`;
+  }
+
+  iniciarTarea(id: number): Observable<TareaDTO> {
+    return this.http.post<TareaDTO>(`${this.base}/${id}/iniciar`, {});
+  }
+
+  completarTarea(id: number): Observable<TareaDTO> {
+    return this.http.post<TareaDTO>(`${this.base}/${id}/completar`, {});
+  }
+
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\services\usuarios.service.ts
+Carpeta: services
+Archivo: usuarios.service.ts
+Extensión: .ts
+Tamaño: 928.0 B
+--------------------------------------------------------------------------------
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { UsuarioDTO } from '../models/dtos';
+import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class UsuariosService {
+  private http = inject(HttpClient);
+  private base = `${environment.apiUrl}/usuarios`;
+  private key = 'usuarioId';
+
+  listar(): Observable<UsuarioDTO[]> {
+    return this.http.get<UsuarioDTO[]>(this.base);
+  }
+
+  crear(dto: UsuarioDTO): Observable<UsuarioDTO> {
+    return this.http.post<UsuarioDTO>(this.base, dto);
+  }
+
+  setUsuarioId(id: number) {
+    localStorage.setItem(this.key, String(id));
+  }
+
+  getUsuarioId(): number | null {
+    const v = localStorage.getItem(this.key);
+    return v ? Number(v) : null;
+  }
+
+  logout() {
+    localStorage.removeItem(this.key);
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\dashboard\dashboard.html
+Carpeta: components\dashboard
+Archivo: dashboard.html
+Extensión: .html
+Tamaño: 9.9 KB
+--------------------------------------------------------------------------------
+<div class="dashboard-page">
+  <!-- Saludo -->
+  <header class="dash-header">
+    <div>
+      <h1>¡Buenas tardes!</h1>
+      <p>Vamos a lograr cosas increíbles hoy 🚀</p>
+    </div>
+  </header>
+
+  <!-- Cita motivacional -->
+  <section class="quote-banner">
+    <div class="quote-icon">
+      <mat-icon>format_quote</mat-icon>
+    </div>
+    <div class="quote-text">
+      <p class="quote">
+        “Tu futuro es creado por lo que haces hoy, no mañana.”
+      </p>
+      <p class="author">— Robert Kiyosaki</p>
+    </div>
+  </section>
+
+  <!-- KPIs (ahora dinámicos) -->
+  <section class="kpi-row">
+    <div class="kpi-card kpi-1">
+      <div class="kpi-label">TAREAS COMPLETADAS HOY</div>
+      <div class="kpi-value">
+        {{ tareasHoy().completadas }}
+        <span class="kpi-sub">/{{ tareasHoy().totales }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-2">
+      <div class="kpi-label">PROYECTOS ACTIVOS</div>
+      <div class="kpi-value">{{ proyectosActivos() }}</div>
+    </div>
+
+    <div class="kpi-card kpi-3">
+      <div class="kpi-label">METAS EN PROGRESO</div>
+      <div class="kpi-value">{{ metasEnProgreso() }}</div>
+    </div>
+
+    <div class="kpi-card kpi-4">
+      <div class="kpi-label">HÁBITOS CONFIGURADOS</div>
+      <div class="kpi-value">
+        {{ habitosConfigurados() }}
+      </div>
+    </div>
+  </section>
+  <!-- Paneles medios -->
+  <section class="panels-row">
+    <!-- Panel 1: Barras -->
+    <article class="panel">
+      <header class="panel-header">
+        <mat-icon>bar_chart</mat-icon>
+        <span>Tareas Completadas por Día</span>
+      </header>
+      <div class="panel-body chart-bars">
+        <div class="bar-col" *ngFor="let d of tareasPorDia()">
+          <div class="bar"
+               [ngStyle]="{ height: (30 + d.count * 16) + 'px', opacity: d.count ? 1 : 0.35 }"></div>
+          <span class="bar-label">{{ d.dia }}</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Panel 2: Línea -->
+    <article class="panel">
+      <header class="panel-header">
+        <mat-icon>show_chart</mat-icon>
+        <span>Nivel de Productividad</span>
+      </header>
+      <div class="panel-body chart-line">
+        <div class="chart-line-grid">
+          <div class="line"></div>
+          <div class="dot dot-1"></div>
+          <div class="dot dot-2"></div>
+          <div class="dot dot-3"></div>
+          <div class="dot dot-4"></div>
+        </div>
+        <div class="chart-caption">
+          Actividad Reciente
+          <span class="chart-caption-extra">
+            • Hoy: {{ minutosEnfoqueHoy() }} min de enfoque
+          </span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Panel 3: Logros -->
+    <article class="panel">
+      <header class="panel-header">
+        <mat-icon>emoji_events</mat-icon>
+        <span>Logros</span>
+      </header>
+      <div class="panel-body achievements">
+        <div class="achievement-card">
+          <div class="badge-icon">
+            <mat-icon>star</mat-icon>
+          </div>
+          <div class="badge-text">
+            <div class="badge-title">Primeras Tareas</div>
+            <div class="badge-sub">Completaste tareas en Névoa</div>
+          </div>
+        </div>
+
+        <div class="achievement-card">
+          <div class="badge-icon">
+            <mat-icon>flare</mat-icon>
+          </div>
+          <div class="badge-text">
+            <div class="badge-title">Racha de Pomodoro</div>
+            <div class="badge-sub">Sesiones de enfoque completadas</div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- SEGUNDA FILA: tareas del día / pomodoro / calendario -->
+  <section class="panels-row">
+    <!-- TAREAS DEL DÍA -->
+    <article class="panel">
+      <header class="panel-header">
+        <div class="panel-title">
+          <mat-icon>checklist</mat-icon>
+          <span>Tareas del día</span>
+        </div>
+      </header>
+      <div class="panel-body">
+        <h4>Pendientes ahora</h4>
+        <ul class="simple-list">
+          <li *ngFor="let t of pendientes()">
+            <div class="simple-main">
+              <span>{{ t.titulo }}</span>
+              <small>{{ t.fechaVencimiento | date:'shortDate' }}</small>
+            </div>
+            <div class="simple-actions">
+              <button mat-icon-button *ngIf="t.estado === 'PENDIENTE'" (click)="iniciarTarea(t)">
+                <mat-icon>play_arrow</mat-icon>
+              </button>
+              <button mat-icon-button color="primary" (click)="completarTarea(t)">
+                <mat-icon>check</mat-icon>
+              </button>
+            </div>
+          </li>
+          <li class="empty" *ngIf="!pendientes().length">
+            No tienes tareas urgentes ahora mismo.
+          </li>
+        </ul>
+
+        <h4>Próximos {{ dias() }} días</h4>
+        <ul class="simple-list">
+          <li *ngFor="let t of proximas()">
+            <div class="simple-main">
+              <span>{{ t.titulo }}</span>
+              <small>vence {{ t.fechaVencimiento | date:'shortDate' }}</small>
+            </div>
+          </li>
+          <li class="empty" *ngIf="!proximas().length">
+            No hay tareas próximas en los siguientes días.
+          </li>
+        </ul>
+
+        <h4>Recordatorios ({{ minutos() }} min)</h4>
+        <ul class="simple-list">
+          <li *ngFor="let t of recordatorios()">
+            <div class="simple-main">
+              <span>{{ t.titulo }}</span>
+              <small>{{ t.fechaVencimiento | date:'shortTime' }}</small>
+            </div>
+          </li>
+          <li class="empty" *ngIf="!recordatorios().length">
+            No hay recordatorios inmediatos.
+          </li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- POMODORO -->
+    <article class="panel">
+      <header class="panel-header">
+        <div class="panel-title">
+          <mat-icon>timer</mat-icon>
+          <span>Sesiones Pomodoro</span>
+        </div>
+      </header>
+      <div class="panel-body">
+        <div *ngIf="activo(); else formPomodoro" class="pomodoro-active">
+          <p class="label">Sesión en curso</p>
+          <p class="time">{{ tiempoRestante() }}</p>
+          <p class="sub">Tipo: {{ activo()?.tipo }}</p>
+          <button mat-raised-button color="primary" (click)="finalizarPomodoro()">
+            Finalizar sesión
+          </button>
+        </div>
+
+        <ng-template #formPomodoro>
+          <p class="label">Iniciar nueva sesión</p>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Tipo de intervalo</mat-label>
+            <mat-select [(ngModel)]="tipo">
+              <mat-option value="ENFOQUE">Enfoque</mat-option>
+              <mat-option value="DESCANSO_CORTO">Descanso corto</mat-option>
+              <mat-option value="DESCANSO_LARGO">Descanso largo</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Duración (minutos)</mat-label>
+            <input matInput type="number" [(ngModel)]="duracionMin" />
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" (click)="iniciarPomodoro()">
+            Iniciar Pomodoro
+          </button>
+        </ng-template>
+
+        <div class="pomodoro-today">
+          <h4>Hoy</h4>
+          <p class="small">
+            Minutos de enfoque:
+            <strong>{{ minutosEnfoqueHoy() }}</strong>
+          </p>
+          <ul class="simple-list">
+            <li *ngFor="let s of hoy()">
+              <div class="simple-main">
+                <span>{{ s.tipo }} - {{ s.duracionMin }} min</span>
+                <small>{{ s.inicio | date:'shortTime' }}</small>
+              </div>
+            </li>
+            <li class="empty" *ngIf="!hoy().length">
+              Aún no registras sesiones hoy.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- CALENDARIO SIMPLE -->
+    <article class="panel">
+      <header class="panel-header">
+        <div class="panel-title">
+          <mat-icon>event</mat-icon>
+          <span>Calendario de tareas</span>
+        </div>
+      </header>
+      <div class="panel-body">
+        <p class="small">
+          Del {{ desde | date:'dd/MM' }} al {{ hasta | date:'dd/MM' }}
+        </p>
+        <ul class="simple-list">
+          <li *ngFor="let c of calendario()">
+            <div class="simple-main">
+              <span>{{ c.titulo }}</span>
+              <small>{{ c.inicio | date:'dd/MM HH:mm' }}</small>
+            </div>
+          </li>
+          <li class="empty" *ngIf="!calendario().length">
+            No hay tareas programadas en este rango.
+          </li>
+        </ul>
+
+        <a [href]="icsHref()" target="_blank">
+          Descargar calendario (.ics)
+        </a>
+      </div>
+    </article>
+  </section>
+
+
+  <!-- Actividad reciente (dinámica, basada en tareas/proyectos) -->
+  <section class="activity-card">
+    <header class="activity-header">
+      <div class="activity-title">
+        <mat-icon>history</mat-icon>
+        <span>Actividad Reciente</span>
+      </div>
+    </header>
+
+    <ul class="activity-list">
+      <li class="activity-item" *ngFor="let a of actividadReciente()">
+        <div class="bullet"></div>
+        <div class="activity-text">
+          <div class="activity-main">{{ a.texto }}</div>
+          <div class="activity-meta">{{ a.detalle }}</div>
+        </div>
+      </li>
+
+      <li class="activity-item" *ngIf="!actividadReciente().length">
+        <div class="bullet"></div>
+        <div class="activity-text">
+          <div class="activity-main">Empieza creando tus primeras tareas y proyectos.</div>
+          <div class="activity-meta">No hay actividad registrada todavía.</div>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\dashboard\dashboard.scss
+Carpeta: components\dashboard
+Archivo: dashboard.scss
+Extensión: .scss
+Tamaño: 6.3 KB
+--------------------------------------------------------------------------------
+:host {
+  display: block;
+  height: 100%;
+}
+
+.dashboard-page {
+  min-height: calc(100vh - 0px);
+  color: #f9fafb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Encabezado */
+
+.dash-header h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.dash-header p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #cbd5f5;
+}
+
+/* Cita */
+
+.quote-banner {
+  margin-top: 4px;
+  background: linear-gradient(90deg, #7c3aed 0%, #4f46e5 40%, #1e40af 100%);
+  border-radius: 18px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.7);
+}
+
+.quote-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quote-icon mat-icon {
+  color: #e5e7eb;
+}
+
+.quote-text .quote {
+  margin: 0;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.quote-text .author {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  opacity: 0.9;
+}
+
+/* KPIs */
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kpi-card {
+  border-radius: 18px;
+  padding: 12px 14px;
+  background: #1f2937;
+  color: #111827;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.65);
+}
+
+.kpi-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.kpi-sub {
+  font-size: 0.95rem;
+  opacity: 0.85;
+  margin-left: 2px;
+}
+
+/* Colores pastel */
+
+.kpi-1 {
+  background: linear-gradient(135deg, #c7d2fe 0%, #e0e7ff 50%, #e5e7eb 100%);
+}
+
+.kpi-2 {
+  background: linear-gradient(135deg, #ddd6fe 0%, #e9d5ff 60%, #f5f3ff 100%);
+}
+
+.kpi-3 {
+  background: linear-gradient(135deg, #bbf7d0 0%, #dcfce7 60%, #ecfccb 100%);
+}
+
+.kpi-4 {
+  background: linear-gradient(135deg, #fed7aa 0%, #fee2e2 60%, #ffedd5 100%);
+}
+
+/* Paneles medios */
+
+.panels-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 2fr;
+  gap: 12px;
+}
+
+.panel {
+  background: #0f172a;
+  border-radius: 18px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.75);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.panel-header mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  color: #a5b4fc;
+}
+
+.panel-body {
+  font-size: 0.85rem;
+}
+
+/* Gráfico de barras simulado */
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  height: 140px;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bar {
+  width: 16px;
+  border-radius: 999px 999px 4px 4px;
+  background: linear-gradient(180deg, #a5b4fc 0%, #6366f1 60%, #1d4ed8 100%);
+}
+
+.bar-label {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+/* Gráfico de línea simulado */
+
+.chart-line-grid {
+  position: relative;
+  height: 120px;
+  border-radius: 12px;
+  background: radial-gradient(circle at top, rgba(79, 70, 229, 0.2), transparent 60%);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  overflow: hidden;
+}
+
+.chart-line-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(148, 163, 184, 0.2) 1px, transparent 1px),
+  linear-gradient(to top, rgba(148, 163, 184, 0.2) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: 0.35;
+}
+
+.chart-line-grid .line {
+  position: absolute;
+  inset: auto 8px 20px 8px;
+  border-radius: 999px;
+  height: 2px;
+  background: linear-gradient(90deg, #22c55e, #a855f7);
+}
+
+.chart-line-grid .dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  border: 2px solid #22c55e;
+}
+
+.dot-1 { left: 12%; top: 60%; }
+.dot-2 { left: 32%; top: 45%; }
+.dot-3 { left: 58%; top: 30%; }
+.dot-4 { left: 80%; top: 40%; }
+
+.chart-caption {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  margin-top: 6px;
+}
+
+/* Logros */
+
+.achievements {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.achievement-card {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.badge-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: radial-gradient(circle, #facc15 0%, #f97316 60%, #b91c1c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-icon mat-icon {
+  font-size: 16px;
+  color: #111827;
+}
+
+.badge-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.badge-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge-sub {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+}
+
+/* Actividad reciente */
+
+.activity-card {
+  margin-top: 6px;
+  background: #0b1120;
+  border-radius: 18px;
+  padding: 12px 14px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.85);
+}
+
+.activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.activity-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.activity-title mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  color: #38bdf8;
+}
+
+.activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.activity-item {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.activity-item:first-child {
+  border-top: none;
+}
+
+.bullet {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-top: 6px;
+  background: radial-gradient(circle, #22c55e 0%, #16a34a 60%, #14532d 100%);
+}
+
+.activity-text {
+  flex: 1;
+}
+
+.activity-main {
+  font-size: 0.9rem;
+}
+
+.activity-meta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* Responsive */
+
+@media (max-width: 1024px) {
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panels-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-page {
+    padding-inline: 4px;
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\dashboard\dashboard.ts
+Carpeta: components\dashboard
+Archivo: dashboard.ts
+Extensión: .ts
+Tamaño: 11.7 KB
+--------------------------------------------------------------------------------
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+
+import { UsuariosService } from '../../services/usuarios.service';
+import { TareasService } from '../../services/tareas.service';
+import { PomodoroService } from '../../services/pomodoro.service';
+import { ProyectosService } from '../../services/proyectos.service';
+import { MetasService } from '../../services/metas.service';
+import { HabitosService } from '../../services/habitos.service';
+
+import { CalendarItemDTO, PomodoroDTO, TareaDTO } from '../../models/dtos';
+import { TipoIntervalo } from '../../models/enums';
+
+import { FormsModule } from '@angular/forms';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatListModule } from '@angular/material/list';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatSelectModule } from '@angular/material/select';
+
+import { interval, Subscription } from 'rxjs';
+
+function toYMD(d: Date) {
+  const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+@Component({
+  standalone: true,
+  selector: 'app-dashboard',
+  imports: [
+    CommonModule, FormsModule,
+    MatToolbarModule, MatButtonModule, MatIconModule, MatCardModule,
+    MatTabsModule, MatListModule, MatFormFieldModule, MatInputModule,
+    MatSnackBarModule, MatDatepickerModule, MatNativeDateModule,
+    MatDividerModule, MatSelectModule
+  ],
+  templateUrl: './dashboard.html',
+  styleUrl: './dashboard.scss'
+})
+export class DashboardComponent implements OnInit, OnDestroy {
+
+  private router = inject(Router);
+  private usuariosSrv = inject(UsuariosService);
+  private tareasSrv = inject(TareasService);
+  private pomoSrv = inject(PomodoroService);
+  private proyectosSrv = inject(ProyectosService);
+  private metasSrv = inject(MetasService);
+  private habitosSrv = inject(HabitosService);
+  private snack = inject(MatSnackBar);
+
+  usuarioId: number | null = null;
+
+  // --- LISTAS ORIGINALES (se siguen usando para calendario / pomodoro) ---
+  pendientes = signal<TareaDTO[]>([]);
+  proximas = signal<TareaDTO[]>([]);
+  recordatorios = signal<TareaDTO[]>([]);
+  dias = signal(3);
+  minutos = signal(60);
+
+  desde: Date = new Date();
+  hasta: Date = new Date(new Date().getTime() + 6 * 24 * 60 * 60 * 1000);
+  calendario = signal<CalendarItemDTO[]>([]);
+  minutosBloqueICS = signal(30);
+
+  plan = signal<Array<{ orden: number; tipo: TipoIntervalo; minutos: number }>>([]);
+  tipo: TipoIntervalo = 'ENFOQUE';
+  duracionMin?: number;
+  tareaId?: number;
+
+  activo = signal<PomodoroDTO | null>(null);
+  hoy = signal<PomodoroDTO[]>([]);
+  restanteSeg = signal(0);
+  private tick$?: Subscription;
+
+  icsHref = computed(() =>
+    this.usuarioId ? this.tareasSrv.icsUrl(this.usuarioId, this.minutosBloqueICS()) : '#'
+  );
+
+  // --- NUEVAS MÉTRICAS PARA EL DASHBOARD ---
+
+  // KPI: tareas de hoy
+  tareasHoy = signal<{ completadas: number; totales: number }>({ completadas: 0, totales: 0 });
+
+  // KPI: proyectos, metas, hábitos
+  proyectosActivos = signal(0);
+  metasEnProgreso = signal(0);
+  habitosConfigurados = signal(0);
+
+  // Gráfico: tareas completadas por día (L, M, X, J, V, S, D)
+  tareasPorDia = signal<Array<{ dia: string; count: number }>>([
+    { dia: 'L', count: 0 },
+    { dia: 'M', count: 0 },
+    { dia: 'X', count: 0 },
+    { dia: 'J', count: 0 },
+    { dia: 'V', count: 0 },
+    { dia: 'S', count: 0 },
+    { dia: 'D', count: 0 },
+  ]);
+
+  // Productividad (minutos de enfoque de hoy)
+  minutosEnfoqueHoy = signal(0);
+
+  // Actividad reciente (texto generado a partir de tus datos)
+  actividadReciente = signal<Array<{ texto: string; detalle: string }>>([]);
+
+  ngOnInit(): void {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+    if (!this.usuarioId) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Lo “viejo”: tareas + calendario + pomodoro
+    this.cargarListas();
+    this.cargarCalendario();
+    this.pomoSrv.plan().subscribe(p => this.plan.set(p));
+    this.cargarHoy();
+    this.reconectarPomodoroActivo();
+
+    // Lo “nuevo”: métricas del dashboard
+    this.cargarMetricas();
+  }
+
+  ngOnDestroy(): void {
+    this.stopTick();
+  }
+  tiempoRestante(): string {
+    const total = this.restanteSeg();
+    const min = Math.floor(total / 60);
+    const seg = total % 60;
+    const mm = min.toString().padStart(2, '0');
+    const ss = seg.toString().padStart(2, '0');
+    return `${mm}:${ss}`;
+  }
+
+  logout() {
+    this.usuariosSrv.logout();
+    this.router.navigate(['/login']);
+  }
+
+  // --- MÉTRICAS DEL DASHBOARD ---
+
+  // --- MÉTRICAS DEL DASHBOARD ---
+  private cargarMetricas() {
+    if (!this.usuarioId) return;
+    const uid = this.usuarioId;
+
+    // TAREAS
+    this.tareasSrv.listar().subscribe(lista => {
+      const mias = lista.filter(t => t.usuario?.id === uid);
+
+      const hoy = new Date();
+      const sameDay = (iso?: string) => {
+        if (!iso) return false;
+        const d = new Date(iso);
+        return d.getFullYear() === hoy.getFullYear()
+          && d.getMonth() === hoy.getMonth()
+          && d.getDate() === hoy.getDate();
+      };
+
+      const completadasHoy = mias.filter(t => t.estado === 'COMPLETADA' && sameDay(t.fechaFinalizacion)).length;
+      const totalesHoy = mias.filter(t => sameDay(t.fechaVencimiento) || sameDay(t.fechaCreacion)).length || mias.length;
+
+      this.tareasHoy.set({ completadas: completadasHoy, totales: totalesHoy });
+
+      // gráfico barras: tareas completadas por día de la semana
+      const labels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+      const map = new Map<string, number>();
+      labels.forEach(l => map.set(l, 0));
+
+      mias.forEach(t => {
+        if (t.estado === 'COMPLETADA' && t.fechaFinalizacion) {
+          const d = new Date(t.fechaFinalizacion);
+          const dow = d.getDay(); // 0=Domingo
+          const label = labels[(dow + 6) % 7]; // Lunes primero
+          map.set(label, (map.get(label) || 0) + 1);
+        }
+      });
+
+      this.tareasPorDia.set(labels.map(l => ({ dia: l, count: map.get(l) || 0 })));
+
+      // actividad reciente basada en últimas tareas
+      const recientes = mias
+        .filter(t => t.estado === 'COMPLETADA' && t.fechaFinalizacion)
+        .sort((a, b) => new Date(b.fechaFinalizacion!).getTime() - new Date(a.fechaFinalizacion!).getTime())
+        .slice(0, 2)
+        .map(t => ({
+          texto: `Completaste la tarea "${t.titulo}"`,
+          detalle: 'Recientemente'
+        }));
+
+      this.actividadReciente.set(recientes);
+    });
+
+    // PROYECTOS (solo del usuario)
+    this.proyectosSrv.listar().subscribe(p => {
+      const propios = p.filter(pr => (pr as any).usuario?.id === uid);
+      this.proyectosActivos.set(propios.length);
+      if (propios.length) {
+        const act = this.actividadReciente();
+        const ultimo = propios[propios.length - 1];
+        this.actividadReciente.set([
+          ...act,
+          { texto: `Creaste el proyecto "${ultimo.nombre}"`, detalle: 'Recientemente' }
+        ]);
+      }
+    });
+
+    // METAS (solo del usuario)
+    this.metasSrv.listar().subscribe(m => {
+      const propias = m.filter(mt => (mt as any).usuario?.id === uid);
+      this.metasEnProgreso.set(propias.length);
+    });
+
+    // HÁBITOS (solo del usuario)
+    this.habitosSrv.listar().subscribe(h => {
+      const propios = h.filter(hb => (hb as any).usuario?.id === uid);
+      this.habitosConfigurados.set(propios.length);
+    });
+  }
+
+
+  // --- Tareas / calendario originales ---
+
+  cargarListas() {
+    if (!this.usuarioId) return;
+    this.tareasSrv.pendientes(this.usuarioId).subscribe(v => this.pendientes.set(v));
+    this.tareasSrv.proximas(this.usuarioId, this.dias()).subscribe(v => this.proximas.set(v));
+    this.tareasSrv.recordatorios(this.usuarioId, this.minutos()).subscribe(v => this.recordatorios.set(v));
+  }
+
+  iniciarTarea(t: TareaDTO) {
+    if (!t.id) return;
+    this.tareasSrv.iniciar(t.id).subscribe(_ => this.cargarListas());
+  }
+
+  completarTarea(t: TareaDTO) {
+    if (!t.id) return;
+    this.tareasSrv.completar(t.id).subscribe(_ => this.cargarListas());
+  }
+
+  cargarCalendario() {
+    if (!this.usuarioId) return;
+    this.tareasSrv
+      .calendario(this.usuarioId, toYMD(this.desde), toYMD(this.hasta))
+      .subscribe(v => this.calendario.set(v));
+  }
+
+  // --- Pomodoro ---
+
+  iniciarPomodoro() {
+    if (!this.usuarioId) return;
+    this.pomoSrv.iniciar(this.usuarioId, this.tipo, this.tareaId, this.duracionMin).subscribe(s => {
+      this.activo.set(s);
+      this.startTick();
+      this.snack.open('Pomodoro iniciado', 'OK', { duration: 1500 });
+      this.cargarHoy();
+    });
+  }
+
+  finalizarPomodoro() {
+    const s = this.activo();
+    if (!s) return;
+    this.pomoSrv.finalizar(s.id).subscribe(fin => {
+      this.activo.set(fin);
+      this.stopTick();
+      this.restanteSeg.set(0);
+      this.snack.open('Pomodoro finalizado', 'OK', { duration: 2000 });
+      this.beep();
+      this.cargarHoy();
+    });
+  }
+
+  private reconectarPomodoroActivo() {
+    if (!this.usuarioId) return;
+    this.pomoSrv.activo(this.usuarioId).subscribe(s => {
+      if (s) {
+        this.activo.set(s);
+        this.startTick();
+      }
+    });
+  }
+
+  private cargarHoy() {
+    if (!this.usuarioId) return;
+    this.pomoSrv.hoy(this.usuarioId).subscribe(lista => {
+      this.hoy.set(lista);
+      const totalEnfoque = lista
+        .filter(s => s.tipo === 'ENFOQUE')
+        .reduce((acc, s) => acc + s.duracionMin, 0);
+      this.minutosEnfoqueHoy.set(totalEnfoque);
+    });
+  }
+
+  private startTick() {
+    this.stopTick();
+    const s = this.activo();
+    if (!s) return;
+    this.tick$ = interval(1000).subscribe(() => {
+      const fin = new Date(s.finPlanificado).getTime();
+      const now = Date.now();
+      const rem = Math.max(0, Math.floor((fin - now) / 1000));
+      this.restanteSeg.set(rem);
+      if (rem <= 0) {
+        this.finalizarPomodoro();
+      }
+    });
+  }
+
+  private stopTick() {
+    this.tick$?.unsubscribe();
+    this.tick$ = undefined;
+  }
+
+  private beep() {
+    try {
+      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (Ctx) {
+        const ctx = new Ctx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.01);
+        osc.start();
+        setTimeout(() => {
+          osc.stop();
+          ctx.close();
+        }, 400);
+      }
+    } catch {}
+
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        new Notification('⏱ Pomodoro terminado');
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
+    }
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\habitos-page\habitos-page.html
+Carpeta: components\habitos-page
+Archivo: habitos-page.html
+Extensión: .html
+Tamaño: 943.0 B
+--------------------------------------------------------------------------------
+<mat-card class="form">
+  <h2>{{ edit ? 'Editar hábito' : 'Nuevo hábito' }}</h2>
+  <div class="grid">
+    <mat-form-field><mat-label>Nombre</mat-label><input matInput [(ngModel)]="nombre"></mat-form-field>
+  </div>
+  <div class="actions">
+    <button mat-raised-button color="primary" (click)="guardar()" [disabled]="!nombre">Guardar</button>
+    <button mat-button (click)="cancelar()" *ngIf="edit">Cancelar</button>
+  </div>
+</mat-card>
+
+<mat-card>
+  <h2>Hábitos</h2>
+  <mat-nav-list>
+    <a mat-list-item *ngFor="let h of lista()">
+      <mat-icon matListItemIcon>auto_awesome</mat-icon>
+      <div matListItemTitle>{{ h.nombre }}</div>
+      <span class="list-actions">
+        <button mat-icon-button (click)="editar(h)"><mat-icon>edit</mat-icon></button>
+        <button mat-icon-button color="warn" (click)="borrar(h)"><mat-icon>delete</mat-icon></button>
+      </span>
+    </a>
+  </mat-nav-list>
+</mat-card>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\habitos-page\habitos-page.scss
+Carpeta: components\habitos-page
+Archivo: habitos-page.scss
+Extensión: .scss
+Tamaño: 166.0 B
+--------------------------------------------------------------------------------
+.form { margin-bottom: 16px; }
+.grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.actions { margin-top: 8px; }
+.list-actions { margin-left: auto; }
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\habitos-page\habitos-page.ts
+Carpeta: components\habitos-page
+Archivo: habitos-page.ts
+Extensión: .ts
+Tamaño: 2.3 KB
+--------------------------------------------------------------------------------
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatListModule } from '@angular/material/list';
+import { MatIconModule } from '@angular/material/icon';
+
+import { HabitosService } from '../../services/habitos.service';
+import { HabitoDTO } from '../../models/dtos';
+import { UsuariosService } from '../../services/usuarios.service';
+
+@Component({
+  standalone: true,
+  selector: 'app-habitos-page',
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatListModule,
+    MatIconModule
+  ],
+  templateUrl: './habitos-page.html',
+  styleUrl: './habitos-page.scss'
+})
+export class HabitosPageComponent implements OnInit {
+
+  private srv = inject(HabitosService);
+  private usuariosSrv = inject(UsuariosService);
+
+  lista = signal<HabitoDTO[]>([]);
+  edit?: HabitoDTO;
+  nombre = '';
+  usuarioId: number | null = null;
+
+  ngOnInit(): void {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+    this.load();
+  }
+
+  load() {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+
+    this.srv.listar().subscribe(v => {
+      const propios = this.usuarioId
+        ? v.filter(h => (h as any).usuario?.id === this.usuarioId)
+        : v;
+      this.lista.set(propios);
+    });
+  }
+
+  guardar() {
+    const nombre = this.nombre.trim();
+    if (!nombre) return;
+
+    const base: any = { nombre };
+    if (this.usuarioId) base.usuario = { id: this.usuarioId };
+
+    const obs = this.edit?.id
+      ? this.srv.editar({ id: this.edit.id, ...base })
+      : this.srv.crear(base);
+
+    obs.subscribe(() => {
+      this.cancelar();
+      this.load();
+    });
+  }
+
+  borrar(h: HabitoDTO) {
+    if (h.id) this.srv.borrar(h.id).subscribe(() => this.load());
+  }
+
+  editar(h: HabitoDTO) {
+    this.edit = h;
+    this.nombre = h.nombre;
+  }
+
+  cancelar() {
+    this.edit = undefined;
+    this.nombre = '';
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\layout\layout.html
+Carpeta: components\layout
+Archivo: layout.html
+Extensión: .html
+Tamaño: 3.0 KB
+--------------------------------------------------------------------------------
+<mat-sidenav-container class="shell">
+  <!-- SIDEBAR -->
+  <mat-sidenav mode="side" [opened]="true" class="sidebar">
+    <div class="sidebar-inner">
+      <!-- Branding -->
+      <div class="brand">
+        <div class="brand-logo">
+          <div class="brand-logo-ring ring-1">
+            <div class="brand-logo-ring ring-2">
+              <div class="brand-logo-ring ring-3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">Ideas</div>
+          <div class="brand-subtitle">Tu espacio productivo</div>
+        </div>
+      </div>
+
+      <!-- Menú -->
+      <nav class="nav-list">
+        <a mat-list-item
+           routerLink="/app/dashboard"
+           routerLinkActive="active">
+          <mat-icon matListItemIcon>space_dashboard</mat-icon>
+          <span matListItemTitle>Dashboard</span>
+        </a>
+
+        <a mat-list-item
+           routerLink="/app/tareas"
+           routerLinkActive="active">
+          <mat-icon matListItemIcon>checklist</mat-icon>
+          <span matListItemTitle>Tareas</span>
+        </a>
+
+        <a mat-list-item
+           routerLink="/app/proyectos"
+           routerLinkActive="active">
+          <mat-icon matListItemIcon>work_outline</mat-icon>
+          <span matListItemTitle>Proyectos</span>
+        </a>
+
+        <a mat-list-item
+           routerLink="/app/notas"
+           routerLinkActive="active">
+          <mat-icon matListItemIcon>sticky_note_2</mat-icon>
+          <span matListItemTitle>Notas</span>
+        </a>
+
+        <!-- Estos dos siguen apuntando al dashboard,
+             pero conceptualmente representan secciones internas -->
+        <a mat-list-item
+           routerLink="/app/dashboard"
+           routerLinkActive="active">
+          <mat-icon matListItemIcon>event</mat-icon>
+          <span matListItemTitle>Calendario</span>
+        </a>
+
+        <a mat-list-item
+           routerLink="/app/metas"
+           routerLinkActive="active">
+          <mat-icon matListItemIcon>flag</mat-icon>
+          <span matListItemTitle>Metas</span>
+        </a>
+
+        <a mat-list-item
+           routerLink="/app/dashboard"
+           routerLinkActive="active">
+          <mat-icon matListItemIcon>timer</mat-icon>
+          <span matListItemTitle>Pomodoro</span>
+        </a>
+
+        <a mat-list-item
+           routerLink="/app/habitos"
+           routerLinkActive="active">
+          <mat-icon matListItemIcon>auto_awesome</mat-icon>
+          <span matListItemTitle>Hábitos</span>
+        </a>
+      </nav>
+
+      <!-- Logout abajo -->
+      <div class="sidebar-footer">
+        <button mat-stroked-button color="primary" class="logout-btn" (click)="logout()">
+          <mat-icon>arrow_back</mat-icon>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  </mat-sidenav>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <mat-sidenav-content class="main-content">
+    <router-outlet></router-outlet>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\layout\layout.scss
+Carpeta: components\layout
+Archivo: layout.scss
+Extensión: .scss
+Tamaño: 2.8 KB
+--------------------------------------------------------------------------------
+:host {
+  display: block;
+  height: 100vh;
+}
+
+/* Contenedor principal */
+.shell {
+  height: 100vh;
+  overflow: hidden;              /* 👈 para que el scroll sólo sea del contenido */
+  background: radial-gradient(circle at top left, #020617 0%, #020617 40%, #030712 100%);
+  color: #e5e7eb;
+}
+
+/* SIDEBAR */
+
+.sidebar {
+  width: 260px;
+  border-right: 1px solid rgba(148, 163, 184, 0.25);
+  background: radial-gradient(circle at top left, #111827 0%, #020617 55%, #020617 100%);
+  color: #e5e7eb;
+  padding: 18px 14px;
+  box-sizing: border-box;
+}
+
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Branding */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 4px 6px;
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #020617 55%, #020617 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7);
+}
+
+.brand-logo-ring {
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-logo-ring.ring-1 {
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle, #f9fafb 0%, #020617 80%);
+}
+
+.brand-logo-ring.ring-2 {
+  width: 18px;
+  height: 18px;
+  background: radial-gradient(circle, #020617 0%, #e5e7eb 70%);
+}
+
+.brand-logo-ring.ring-3 {
+  width: 7px;
+  height: 7px;
+  background: radial-gradient(circle, #f9fafb 0%, #020617 90%);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  font-size: 1rem;
+}
+
+.brand-subtitle {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Navegación */
+
+.nav-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-list a[mat-list-item] {
+  border-radius: 999px;
+  padding-inline: 10px;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.nav-list a[mat-list-item] mat-icon {
+  color: #a5b4fc;
+}
+
+.nav-list a[mat-list-item].active {
+  background: linear-gradient(90deg, #7c3aed 0%, #4f46e5 45%, transparent 100%);
+  box-shadow: 0 10px 24px rgba(88, 28, 135, 0.65);
+}
+
+/* Footer / logout */
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.logout-btn {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 999px;
+  border-color: rgba(148, 163, 184, 0.4);
+  color: #e5e7eb;
+}
+
+.logout-btn mat-icon {
+  margin-right: 6px;
+}
+
+/* CONTENIDO PRINCIPAL */
+
+.main-content {
+  height: 100%;
+  background: radial-gradient(circle at top left, #020617 0%, #020617 40%, #020617 100%);
+  color: #f9fafb;
+  overflow-y: auto;              /* 👈 el scroll vive aquí */
+  padding: 20px 24px 28px;
+  box-sizing: border-box;
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\layout\layout.ts
+Carpeta: components\layout
+Archivo: layout.ts
+Extensión: .ts
+Tamaño: 1.2 KB
+--------------------------------------------------------------------------------
+import { Component, computed, inject } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatListModule } from '@angular/material/list';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import {TareasService} from '../../services/tareas.service';
+import {UsuariosService} from '../../services/usuarios.service';
+
+@Component({
+  standalone: true,
+  selector: 'app-layout',
+  imports: [
+    CommonModule, RouterModule,
+    MatSidenavModule, MatListModule, MatToolbarModule, MatIconModule, MatButtonModule
+  ],
+  templateUrl: './layout.html',
+  styleUrl: './layout.scss'
+})
+export class LayoutComponent {
+  private router = inject(Router);
+  private tareasSrv = inject(TareasService);
+  private usuariosSrv = inject(UsuariosService);
+
+  usuarioId = this.usuariosSrv.getUsuarioId();
+  icsHref = computed(() => this.usuarioId ? this.tareasSrv.icsUrl(this.usuarioId, 30) : '#');
+
+  logout() {
+    this.usuariosSrv.logout();
+    this.router.navigate(['/login']);
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\login\login.html
+Carpeta: components\login
+Archivo: login.html
+Extensión: .html
+Tamaño: 1.4 KB
+--------------------------------------------------------------------------------
+<div class="auth-page login-bg">
+  <div class="auth-inner">
+    <!-- Logo -->
+    <div class="logo-mark">
+      <div class="logo-ring ring-1">
+        <div class="logo-ring ring-2">
+          <div class="logo-ring ring-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarjeta -->
+    <div class="auth-card">
+      <h1 class="title">Bienvenido de Nuevo</h1>
+      <p class="subtitle">Transforma tus ideas en realidad</p>
+
+      <form (ngSubmit)="entrar()" class="form" autocomplete="off">
+        <div class="field">
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="login.email"
+            placeholder="Email"
+            required
+          />
+        </div>
+
+        <div class="field">
+          <input
+            type="password"
+            name="password"
+            [(ngModel)]="login.password"
+            placeholder="Password"
+            required
+          />
+        </div>
+
+        <div class="forgot">
+          <a href="javascript:void(0)">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="primary-btn">
+          SIGN IN
+        </button>
+
+        <div class="bottom-link">
+          <span>No tienes cuenta? </span>
+          <button type="button" class="link-btn" (click)="goRegister()">
+            Regístrate aquí
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\login\login.scss
+Carpeta: components\login
+Archivo: login.scss
+Extensión: .scss
+Tamaño: 2.8 KB
+--------------------------------------------------------------------------------
+:host {
+  display: block;
+}
+
+/* Fondo general */
+.auth-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+/* Gradiente específico para LOGIN (morado) */
+.login-bg {
+  background: radial-gradient(circle at top left, #a855f7 0%, #7c3aed 30%, #1f172a 70%, #020014 100%);
+}
+
+/* Contenedor logo + tarjeta */
+.auth-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Logo concéntrico */
+.logo-mark {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #111827);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.logo-ring {
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-1 {
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, #f9fafb 0%, #020617 80%);
+}
+
+.ring-2 {
+  width: 52px;
+  height: 52px;
+  background: radial-gradient(circle, #020617 0%, #e5e7eb 70%);
+}
+
+.ring-3 {
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle, #f9fafb 0%, #020617 85%);
+}
+
+/* Tarjeta blanca */
+.auth-card {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px 28px 28px;
+  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.55);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 18px;
+}
+
+/* Mensaje de error (si lo usas) */
+.error-msg {
+  color: #b91c1c;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+
+/* Formulario */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field input {
+  width: 100%;
+  box-sizing: border-box;     /* evita que se salga del cuadro */
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  outline: none;
+  background: #f9fafb;
+}
+
+.field input:focus {
+  border-color: #4b5563;
+  background: #ffffff;
+}
+
+/* Botón principal oscuro */
+.primary-btn {
+  margin-top: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: #020617;
+  color: #f9fafb;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  background: #111827;
+}
+
+/* Enlaces inferiores */
+.secondary-link {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.link-btn {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: #111827;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\login\login.ts
+Carpeta: components\login
+Archivo: login.ts
+Extensión: .ts
+Tamaño: 1.6 KB
+--------------------------------------------------------------------------------
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+
+import { UsuariosService } from '../../services/usuarios.service';
+import { UsuarioDTO } from '../../models/dtos';
+
+// Si quieres usar MatCard o botones de Material puedes importarlos aquí,
+// pero la vista nueva usa HTML nativo, así que solo dejo Forms + Common.
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './login.html',
+  styleUrl: './login.scss'
+})
+export class LoginComponent implements OnInit {
+
+  private usuariosSrv = inject(UsuariosService);
+  private router = inject(Router);
+
+  usuarios = signal<UsuarioDTO[]>([]);
+
+  // Formulario de login
+  login = {
+    email: '',
+    password: ''
+  };
+
+  ngOnInit(): void {
+    // Cargamos usuarios para validar email + password en el front
+    this.usuariosSrv.listar().subscribe(u => this.usuarios.set(u));
+  }
+
+  entrar() {
+    const email = this.login.email.trim();
+    const pass = this.login.password;
+
+    if (!email || !pass) {
+      alert('Ingresa tu email y contraseña');
+      return;
+    }
+
+    const user = this.usuarios().find(
+      u => u.email === email && u.contrasena === pass
+    );
+
+    if (!user || !user.id) {
+      alert('Credenciales inválidas');
+      return;
+    }
+
+    this.usuariosSrv.setUsuarioId(user.id);
+    this.router.navigate(['/app/dashboard']);
+  }
+
+  goRegister() {
+    this.router.navigate(['/register']);
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\metas-page\metas-page.html
+Carpeta: components\metas-page
+Archivo: metas-page.html
+Extensión: .html
+Tamaño: 1.6 KB
+--------------------------------------------------------------------------------
+<mat-card class="form">
+  <h2>{{ edit ? 'Editar meta' : 'Nueva meta' }}</h2>
+  <div class="grid">
+    <mat-form-field><mat-label>Título</mat-label><input matInput [(ngModel)]="form.titulo"></mat-form-field>
+    <mat-form-field><mat-label>Tipo</mat-label><mat-select [(ngModel)]="form.tipoMeta"><mat-option *ngFor="let t of tipos" [value]="t">{{t}}</mat-option></mat-select></mat-form-field>
+    <mat-form-field><mat-label>Fecha límite</mat-label><input matInput [matDatepicker]="dp" [(ngModel)]="form.fecha"><mat-datepicker-toggle matSuffix [for]="dp"></mat-datepicker-toggle><mat-datepicker #dp></mat-datepicker></mat-form-field>
+    <mat-form-field class="full"><mat-label>Descripción</mat-label><textarea matInput rows="3" [(ngModel)]="form.descripcion"></textarea></mat-form-field>
+  </div>
+  <div class="actions">
+    <button mat-raised-button color="primary" (click)="guardar()" [disabled]="!form.titulo || !form.descripcion">Guardar</button>
+    <button mat-button (click)="cancelar()" *ngIf="edit">Cancelar</button>
+  </div>
+</mat-card>
+
+<mat-card>
+  <h2>Metas</h2>
+  <mat-nav-list>
+    <a mat-list-item *ngFor="let m of lista()">
+      <mat-icon matListItemIcon>flag</mat-icon>
+      <div matListItemTitle>{{ m.titulo }}</div>
+      <div matListItemLine>{{ m.tipoMeta }} <span *ngIf="m.fechaLimite">• {{ m.fechaLimite | date }}</span></div>
+      <span class="list-actions">
+        <button mat-icon-button (click)="editar(m)"><mat-icon>edit</mat-icon></button>
+        <button mat-icon-button color="warn" (click)="borrar(m)"><mat-icon>delete</mat-icon></button>
+      </span>
+    </a>
+  </mat-nav-list>
+</mat-card>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\metas-page\metas-page.scss
+Carpeta: components\metas-page
+Archivo: metas-page.scss
+Extensión: .scss
+Tamaño: 275.0 B
+--------------------------------------------------------------------------------
+.form { margin-bottom: 16px; }
+.grid { display: grid; gap: 12px; grid-template-columns: 2fr 1fr 1fr; }
+.full { grid-column: 1 / -1; }
+.actions { margin-top: 8px; }
+.list-actions { margin-left: auto; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\metas-page\metas-page.ts
+Carpeta: components\metas-page
+Archivo: metas-page.ts
+Extensión: .ts
+Tamaño: 3.3 KB
+--------------------------------------------------------------------------------
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatListModule } from '@angular/material/list';
+import { MatIconModule } from '@angular/material/icon';
+
+import { MetasService } from '../../services/metas.service';
+import { MetaDTO } from '../../models/dtos';
+import { TipoMeta } from '../../models/enums';
+import { UsuariosService } from '../../services/usuarios.service';
+
+@Component({
+  standalone: true,
+  selector: 'app-metas-page',
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatButtonModule,
+    MatListModule,
+    MatIconModule
+  ],
+  templateUrl: './metas-page.html',
+  styleUrl: './metas-page.scss'
+})
+export class MetasPageComponent implements OnInit {
+
+  private srv = inject(MetasService);
+  private usuariosSrv = inject(UsuariosService);
+
+  tipos: TipoMeta[] = ['SALUD', 'APRENDIZAJE', 'PERSONAL', 'PROFESIONAL'];
+
+  lista = signal<MetaDTO[]>([]);
+  edit?: MetaDTO;
+  usuarioId: number | null = null;
+
+  form: {
+    titulo: string;
+    descripcion: string;
+    tipoMeta: TipoMeta;
+    fecha?: Date | null;
+  } = {
+    titulo: '',
+    descripcion: '',
+    tipoMeta: 'PERSONAL',
+    fecha: null
+  };
+
+  ngOnInit(): void {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+    this.load();
+  }
+
+  load() {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+
+    this.srv.listar().subscribe(v => {
+      const propias = this.usuarioId
+        ? v.filter(m => (m as any).usuario?.id === this.usuarioId)
+        : v;
+
+      this.lista.set(propias);
+    });
+  }
+
+  private toISO(d: Date | null | undefined) {
+    return d ? new Date(d).toISOString().substring(0, 10) : undefined;
+  }
+
+  guardar() {
+    const payload: MetaDTO = {
+      id: this.edit?.id,
+      titulo: this.form.titulo.trim(),
+      descripcion: this.form.descripcion.trim(),
+      tipoMeta: this.form.tipoMeta,
+      fechaLimite: this.toISO(this.form.fecha),
+      ...(this.usuarioId ? { usuario: { id: this.usuarioId } } : {})
+    };
+
+    if (!payload.titulo) return;
+
+    const obs = this.edit?.id ? this.srv.editar(payload) : this.srv.crear(payload);
+
+    obs.subscribe(() => {
+      this.cancelar();
+      this.load();
+    });
+  }
+
+  editar(m: MetaDTO) {
+    this.edit = m;
+    this.form = {
+      titulo: m.titulo,
+      descripcion: m.descripcion,
+      tipoMeta: m.tipoMeta,
+      fecha: m.fechaLimite ? new Date(m.fechaLimite) : null
+    };
+  }
+
+  borrar(m: MetaDTO) {
+    if (m.id) this.srv.borrar(m.id).subscribe(() => this.load());
+  }
+
+  cancelar() {
+    this.edit = undefined;
+    this.form = { titulo: '', descripcion: '', tipoMeta: 'PERSONAL', fecha: null };
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\notas-page\notas-page.html
+Carpeta: components\notas-page
+Archivo: notas-page.html
+Extensión: .html
+Tamaño: 1.2 KB
+--------------------------------------------------------------------------------
+<mat-card class="form">
+  <h2>{{ edit ? 'Editar nota' : 'Nueva nota' }}</h2>
+  <div class="grid">
+    <mat-form-field><mat-label>Título</mat-label><input matInput [(ngModel)]="form.titulo"></mat-form-field>
+    <mat-form-field><mat-label>Categoría</mat-label><input matInput [(ngModel)]="form.categoria"></mat-form-field>
+    <mat-form-field class="full"><mat-label>Contenido</mat-label><textarea matInput rows="3" [(ngModel)]="form.contenido"></textarea></mat-form-field>
+  </div>
+  <div class="actions">
+    <button mat-raised-button color="primary" (click)="guardar()" [disabled]="!form.titulo || !form.categoria">Guardar</button>
+    <button mat-button (click)="cancelar()" *ngIf="edit">Cancelar</button>
+  </div>
+</mat-card>
+
+<mat-card>
+  <h2>Notas</h2>
+  <mat-nav-list>
+    <a mat-list-item *ngFor="let n of lista()">
+      <mat-icon matListItemIcon>note</mat-icon>
+      <div matListItemTitle>{{ n.titulo }}</div>
+      <div matListItemLine>{{ n.categoria }}</div>
+      <span class="list-actions">
+        <button mat-icon-button (click)="editar(n)"><mat-icon>edit</mat-icon></button>
+        <button mat-icon-button color="warn" (click)="borrar(n)"><mat-icon>delete</mat-icon></button>
+      </span>
+    </a>
+  </mat-nav-list>
+</mat-card>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\notas-page\notas-page.scss
+Carpeta: components\notas-page
+Archivo: notas-page.scss
+Extensión: .scss
+Tamaño: 271.0 B
+--------------------------------------------------------------------------------
+.form { margin-bottom: 16px; }
+.grid { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+.full { grid-column: 1 / -1; }
+.actions { margin-top: 8px; }
+.list-actions { margin-left: auto; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\notas-page\notas-page.ts
+Carpeta: components\notas-page
+Archivo: notas-page.ts
+Extensión: .ts
+Tamaño: 2.7 KB
+--------------------------------------------------------------------------------
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatListModule } from '@angular/material/list';
+import { MatIconModule } from '@angular/material/icon';
+
+import { NotasService } from '../../services/notas.service';
+import { NotaDTO } from '../../models/dtos';
+import { UsuariosService } from '../../services/usuarios.service';
+
+@Component({
+  standalone: true,
+  selector: 'app-notas-page',
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatListModule,
+    MatIconModule
+  ],
+  templateUrl: './notas-page.html',
+  styleUrl: './notas-page.scss'
+})
+export class NotasPageComponent implements OnInit {
+
+  private srv = inject(NotasService);
+  private usuariosSrv = inject(UsuariosService);
+
+  lista = signal<NotaDTO[]>([]);
+  edit?: NotaDTO;
+  form: NotaDTO = { titulo: '', categoria: '', contenido: '' };
+  usuarioId: number | null = null;
+
+  ngOnInit(): void {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+    this.load();
+  }
+
+  load() {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+
+    this.srv.listar().subscribe(v => {
+      const propios = this.usuarioId
+        ? v.filter(n => (n as any).usuario?.id === this.usuarioId)
+        : v;
+      this.lista.set(propios);
+    });
+  }
+
+  guardar() {
+    const titulo = this.form.titulo?.trim();
+    const categoria = this.form.categoria?.trim();
+    const contenido = this.form.contenido?.trim() ?? '';
+
+    if (!titulo || !categoria) return;
+
+    const base: any = { titulo, categoria, contenido };
+    if (this.usuarioId) base.usuario = { id: this.usuarioId };
+
+    const payload = this.edit?.id ? { id: this.edit.id, ...base } : base;
+    const obs = this.edit?.id ? this.srv.editar(payload) : this.srv.crear(base);
+
+    obs.subscribe(() => {
+      this.cancelar();
+      this.load();
+    });
+  }
+
+  borrar(n: NotaDTO) {
+    if (n.id) this.srv.borrar(n.id).subscribe(() => this.load());
+  }
+
+  editar(n: NotaDTO) {
+    this.edit = n;
+    this.form = {
+      id: n.id,
+      titulo: n.titulo,
+      categoria: n.categoria,
+      contenido: n.contenido,
+      usuario: n.usuario
+    };
+  }
+
+  cancelar() {
+    this.edit = undefined;
+    this.form = { titulo: '', categoria: '', contenido: '' };
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\proyectos-page\proyectos-page.html
+Carpeta: components\proyectos-page
+Archivo: proyectos-page.html
+Extensión: .html
+Tamaño: 2.8 KB
+--------------------------------------------------------------------------------
+<div class="projects-page">
+  <!-- ENCABEZADO -->
+  <div class="header-row">
+    <div>
+      <h1>Mis Proyectos</h1>
+      <p class="subtitle">Construye el futuro, un proyecto a la vez 🚀</p>
+    </div>
+
+    <button mat-raised-button color="primary" (click)="abrirNuevo()">
+      <mat-icon>add</mat-icon>
+      Nuevo Proyecto
+    </button>
+  </div>
+
+  <!-- FORM NUEVO / EDITAR PROYECTO -->
+  <mat-card class="form-card" *ngIf="showForm">
+    <h2>{{ edit ? 'Editar proyecto' : 'Nuevo proyecto' }}</h2>
+
+    <div class="form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre</mat-label>
+        <input matInput [(ngModel)]="form.nombre" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Descripción</mat-label>
+        <input matInput [(ngModel)]="form.descripcion" />
+      </mat-form-field>
+    </div>
+
+    <div class="form-actions">
+      <button mat-stroked-button (click)="cancelar()">Cancelar</button>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="guardar()"
+        [disabled]="!form.nombre.trim()"
+      >
+        Guardar
+      </button>
+    </div>
+  </mat-card>
+
+  <!-- GRID DE PROYECTOS -->
+  <div class="projects-grid">
+    <mat-card
+      class="project-card"
+      *ngFor="let p of proyectos(); let i = index"
+      [ngClass]="cardColorClass(i)"
+    >
+      <!-- Top row: icono + acciones -->
+      <div class="project-header">
+        <div class="project-icon">
+          <mat-icon>folder</mat-icon>
+        </div>
+
+        <div class="project-actions">
+          <button mat-icon-button (click)="editarProyecto(p)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="borrar(p)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenido -->
+      <div class="project-body">
+        <div class="project-title">{{ p.nombre }}</div>
+        <div class="project-description">
+          {{ p.descripcion || 'Sin descripción' }}
+        </div>
+      </div>
+
+      <!-- Progreso -->
+      <div class="project-progress">
+        <div class="progress-label-row">
+          <span>Progreso</span>
+          <span>{{ p.progresoPorc ?? 0 }}%</span>
+        </div>
+
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            [style.width.%]="p.progresoPorc ?? 0"
+          ></div>
+        </div>
+
+        <div class="progress-tasks">
+          Tareas
+          {{ p.tareasCompletadas ?? 0 }}/{{ p.tareasTotales ?? 0 }}
+        </div>
+      </div>
+    </mat-card>
+
+    <div class="empty" *ngIf="!proyectos().length">
+      Aún no tienes proyectos. ¡Crea el primero con “Nuevo Proyecto”! 💡
+    </div>
+  </div>
+</div>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\proyectos-page\proyectos-page.scss
+Carpeta: components\proyectos-page
+Archivo: proyectos-page.scss
+Extensión: .scss
+Tamaño: 3.5 KB
+--------------------------------------------------------------------------------
+.projects-page {
+  padding: 24px 32px;
+  min-height: calc(100vh - 64px);
+  color: #f5f5ff;
+  background: radial-gradient(circle at top left, #171c36 0, #050611 55%);
+}
+
+/* HEADER */
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    margin: 4px 0 0;
+    font-size: 14px;
+    opacity: 0.85;
+  }
+
+  button {
+    border-radius: 999px;
+    padding: 0 20px;
+    font-weight: 600;
+    box-shadow: 0 0 18px rgba(80, 140, 255, 0.6);
+  }
+
+  mat-icon {
+    margin-right: 4px;
+  }
+}
+
+/* FORM */
+.form-card {
+  margin-bottom: 24px;
+  border-radius: 18px;
+  padding: 16px 18px;
+  background: rgba(10, 15, 50, 0.96);
+  color: #f9fbff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+
+  .full {
+    grid-column: 1 / -1;
+  }
+}
+
+.form-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  button {
+    border-radius: 999px;
+  }
+}
+
+/* GRID DE PROYECTOS */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* Tarjeta base */
+.project-card {
+  position: relative;
+  border-radius: 18px;
+  padding: 16px 16px 14px;
+  background: #f8f9ff;
+  color: #1a1d2c;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Color de acento por tarjeta */
+.card--blue .project-icon {
+  background: #2d8bff22;
+  color: #2d8bff;
+}
+.card--green .project-icon {
+  background: #22c55e22;
+  color: #22c55e;
+}
+.card--purple .project-icon {
+  background: #a855f722;
+  color: #a855f7;
+}
+
+/* Header de cada tarjeta */
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.project-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.project-actions {
+  display: flex;
+  gap: 4px;
+
+  button {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Contenido */
+.project-body {
+  margin-bottom: 12px;
+}
+
+.project-title {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.project-description {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* Progreso */
+.project-progress {
+  font-size: 12px;
+}
+
+.progress-label-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.progress-bar {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #dde1ff;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4f46e5, #a855f7);
+}
+
+.progress-tasks {
+  opacity: 0.8;
+}
+
+/* Estado vacío */
+.empty {
+  grid-column: 1 / -1;
+  padding: 16px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1120px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .projects-page {
+    padding: 16px;
+  }
+
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    button {
+      align-self: stretch;
+      justify-content: center;
+    }
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\proyectos-page\proyectos-page.ts
+Carpeta: components\proyectos-page
+Archivo: proyectos-page.ts
+Extensión: .ts
+Tamaño: 4.2 KB
+--------------------------------------------------------------------------------
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatListModule } from '@angular/material/list';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+
+import { ProyectosService } from '../../services/proyectos.service';
+import { ProyectoDTO } from '../../models/dtos';
+import { UsuariosService } from '../../services/usuarios.service';
+
+// Campos extra SOLO para la vista (el backend puede ignorarlos)
+type ProyectoView = ProyectoDTO & {
+  progresoPorc?: number;
+  tareasCompletadas?: number;
+  tareasTotales?: number;
+};
+
+@Component({
+  standalone: true,
+  selector: 'app-proyectos-page',
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTabsModule,
+    MatListModule,
+    MatSnackBarModule
+  ],
+  templateUrl: './proyectos-page.html',
+  styleUrl: './proyectos-page.scss'
+})
+export class ProyectosPageComponent implements OnInit {
+
+  private srv = inject(ProyectosService);
+  private usuariosSrv = inject(UsuariosService);
+  private snack = inject(MatSnackBar);
+
+  usuarioId: number | null = null;
+
+  proyectos = signal<ProyectoView[]>([]);
+  edit?: ProyectoView;
+  showForm = false;
+
+  form = {
+    nombre: '',
+    descripcion: ''
+  };
+
+  ngOnInit(): void {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+    this.cargar();
+  }
+
+  cargar() {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+
+    this.srv.listar().subscribe(list => {
+      let propios: ProyectoDTO[] = list;
+      if (this.usuarioId) {
+        propios = list.filter(p => (p as any).usuario?.id === this.usuarioId);
+      }
+
+      const adaptados: ProyectoView[] = propios.map(p => ({
+        ...p,
+        progresoPorc: (p as any).progresoPorc ?? 0,
+        tareasCompletadas: (p as any).tareasCompletadas ?? 0,
+        tareasTotales: (p as any).tareasTotales ?? 0
+      }));
+
+      this.proyectos.set(adaptados);
+    });
+  }
+
+  abrirNuevo() {
+    this.edit = undefined;
+    this.form = { nombre: '', descripcion: '' };
+    this.showForm = true;
+  }
+
+  editarProyecto(p: ProyectoView) {
+    this.edit = p;
+    this.form = {
+      nombre: p.nombre,
+      descripcion: p.descripcion ?? ''
+    };
+    this.showForm = true;
+  }
+
+  cancelar() {
+    this.edit = undefined;
+    this.showForm = false;
+    this.form = { nombre: '', descripcion: '' };
+  }
+
+  guardar() {
+    const nombre = this.form.nombre.trim();
+    const descripcion = this.form.descripcion.trim();
+
+    if (!nombre) {
+      this.snack.open('El nombre es obligatorio', 'OK', { duration: 2000 });
+      return;
+    }
+
+    const payload: ProyectoDTO = {
+      id: this.edit?.id,
+      nombre,
+      descripcion,
+      ...(this.usuarioId ? { usuario: { id: this.usuarioId } } : {})
+    };
+
+    const obs = this.edit?.id ? this.srv.editar(payload) : this.srv.crear(payload);
+
+    obs.subscribe({
+      next: () => {
+        this.snack.open('Proyecto guardado', 'OK', { duration: 1500 });
+        this.cancelar();
+        this.cargar();
+      },
+      error: () => this.snack.open('No se pudo guardar el proyecto', 'OK', { duration: 2000 })
+    });
+  }
+
+  borrar(p: ProyectoView) {
+    if (!p.id) return;
+    if (!confirm(`¿Eliminar proyecto "${p.nombre}"?`)) return;
+
+    this.srv.borrar(p.id).subscribe({
+      next: () => {
+        this.snack.open('Proyecto eliminado', 'OK', { duration: 1500 });
+        this.cargar();
+      },
+      error: () => this.snack.open('No se pudo eliminar el proyecto', 'OK', { duration: 2000 })
+    });
+  }
+
+  // Para alternar colores de tarjetas e iconos
+  cardColorClass(index: number): string {
+    const colors = ['card--blue', 'card--green', 'card--purple'];
+    return colors[index % colors.length];
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\register\register.html
+Carpeta: components\register
+Archivo: register.html
+Extensión: .html
+Tamaño: 1.7 KB
+--------------------------------------------------------------------------------
+<div class="auth-page register-bg">
+  <div class="auth-inner">
+    <!-- LOGO -->
+    <div class="logo-mark">
+      <div class="logo-ring ring-1">
+        <div class="logo-ring ring-2">
+          <div class="logo-ring ring-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TARJETA -->
+    <div class="auth-card">
+      <div class="title">Comienza tu Viaje</div>
+      <div class="subtitle">Tu productividad está a un paso</div>
+
+      <!-- Mensaje de error -->
+      <div *ngIf="errorMsg" class="error-msg">
+        {{ errorMsg }}
+      </div>
+
+      <form class="form" (ngSubmit)="registrar()">
+        <div class="field">
+          <input
+            type="text"
+            name="nombre"
+            [(ngModel)]="nuevo.nombre"
+            placeholder="Nombre Completo">
+        </div>
+
+        <div class="field">
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="nuevo.email"
+            placeholder="Email">
+        </div>
+
+        <div class="field">
+          <input
+            type="password"
+            name="password"
+            [(ngModel)]="nuevo.contrasena"
+            placeholder="Password">
+        </div>
+
+        <div class="field">
+          <input
+            type="password"
+            name="confirmPassword"
+            [(ngModel)]="confirmPassword"
+            placeholder="Confirmar Password">
+        </div>
+
+        <button type="submit" class="primary-btn">
+          REGISTRO
+        </button>
+      </form>
+
+      <div class="bottom-link">
+        Ya tienes cuenta?
+        <button type="button" class="link-btn" (click)="irALogin()">
+          Inicia sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\register\register.scss
+Carpeta: components\register
+Archivo: register.scss
+Extensión: .scss
+Tamaño: 2.8 KB
+--------------------------------------------------------------------------------
+:host {
+  display: block;
+}
+
+/* Fondo general */
+.auth-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+/* Gradiente específico para REGISTER (azul) */
+.register-bg {
+  background: radial-gradient(circle at top left, #2563eb 0%, #1e3a8a 35%, #020014 100%);
+}
+
+/* Contenedor logo + tarjeta */
+.auth-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Logo concéntrico */
+.logo-mark {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #111827);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.logo-ring {
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-1 {
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, #f9fafb 0%, #020617 80%);
+}
+
+.ring-2 {
+  width: 52px;
+  height: 52px;
+  background: radial-gradient(circle, #020617 0%, #e5e7eb 70%);
+}
+
+.ring-3 {
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle, #f9fafb 0%, #020617 85%);
+}
+
+/* Tarjeta blanca */
+.auth-card {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px 28px 28px;
+  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.55);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 18px;
+}
+
+/* Mensaje de error */
+.error-msg {
+  color: #b91c1c;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+
+/* Formulario */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field input {
+  width: 100%;
+  box-sizing: border-box;          /* evita que se salga del cuadro */
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  outline: none;
+  background: #f9fafb;
+}
+
+.field input:focus {
+  border-color: #4b5563;
+  background: #ffffff;
+}
+
+/* Botón principal oscuro */
+.primary-btn {
+  margin-top: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: #020617;
+  color: #f9fafb;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  background: #111827;
+}
+
+/* Enlaces inferiores */
+.bottom-link {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.link-btn {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: #111827;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\register\register.ts
+Carpeta: components\register
+Archivo: register.ts
+Extensión: .ts
+Tamaño: 1.7 KB
+--------------------------------------------------------------------------------
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+
+import { UsuariosService } from '../../services/usuarios.service';
+import { UsuarioDTO } from '../../models/dtos';
+
+@Component({
+  standalone: true,
+  selector: 'app-register',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './register.html',
+  styleUrl: './register.scss'
+})
+export class RegisterComponent {
+
+  private usuariosSrv = inject(UsuariosService);
+  private router = inject(Router);
+
+  // Datos del formulario
+  nuevo: UsuarioDTO = { nombre: '', email: '', contrasena: '' };
+  confirmPassword = '';
+
+  // Mensaje de error simple
+  errorMsg = '';
+
+  registrar() {
+    this.errorMsg = '';
+
+    // Validaciones básicas
+    if (!this.nuevo.nombre || !this.nuevo.email || !this.nuevo.contrasena || !this.confirmPassword) {
+      this.errorMsg = 'Por favor completa todos los campos.';
+      return;
+    }
+
+    if (this.nuevo.contrasena.length < 6) {
+      this.errorMsg = 'La contraseña debe tener al menos 6 caracteres.';
+      return;
+    }
+
+    if (this.nuevo.contrasena !== this.confirmPassword) {
+      this.errorMsg = 'Las contraseñas no coinciden.';
+      return;
+    }
+
+    this.usuariosSrv.crear(this.nuevo).subscribe({
+      next: (u) => {
+        if (u.id) {
+          this.usuariosSrv.setUsuarioId(u.id);
+          this.router.navigate(['/app/dashboard']);
+        }
+      },
+      error: () => {
+        this.errorMsg = 'No se pudo registrar el usuario. Inténtalo de nuevo.';
+      }
+    });
+  }
+
+  irALogin() {
+    this.router.navigate(['/login']);
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\tareas-page\tareas-page.html
+Carpeta: components\tareas-page
+Archivo: tareas-page.html
+Extensión: .html
+Tamaño: 5.3 KB
+--------------------------------------------------------------------------------
+<div class="tasks-page">
+  <!-- ENCABEZADO -->
+  <div class="header-row">
+    <div>
+      <h1>Mis Tareas</h1>
+      <p class="subtitle">Organiza tu día, conquista tus objetivos ✨</p>
+    </div>
+
+    <button mat-raised-button color="primary" (click)="showForm = !showForm">
+      <mat-icon>add</mat-icon>
+      Nueva Tarea
+    </button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <mat-card class="kpi-card kpi-total">
+      <div class="kpi-label">Total de Tareas</div>
+      <div class="kpi-value">{{ totalTareas() }}</div>
+    </mat-card>
+
+    <mat-card class="kpi-card kpi-pendientes">
+      <div class="kpi-label">Pendientes</div>
+      <div class="kpi-value">{{ pendientesCount() }}</div>
+    </mat-card>
+
+    <mat-card class="kpi-card kpi-completadas">
+      <div class="kpi-label">Completadas</div>
+      <div class="kpi-value">{{ completadasCount() }}</div>
+    </mat-card>
+  </div>
+
+  <!-- FORMULARIO NUEVA TAREA -->
+  <mat-card class="new-task-card" *ngIf="showForm">
+    <h2>Crear nueva tarea</h2>
+
+    <div class="new-task-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Título</mat-label>
+        <input matInput [(ngModel)]="form.titulo" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Prioridad</mat-label>
+        <mat-select [(ngModel)]="form.prioridad">
+          <mat-option *ngFor="let p of PRIORIDADES" [value]="p">{{ p }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Vencimiento</mat-label>
+        <input
+          matInput
+          type="date"
+          [ngModel]="form.fechaVenc | date: 'yyyy-MM-dd'"
+          (ngModelChange)="onFechaChange($event)"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Duración estimada (min)</mat-label>
+        <input matInput type="number" min="5" [(ngModel)]="form.duracion" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripción</mat-label>
+      <textarea matInput rows="3" [(ngModel)]="form.descripcion"></textarea>
+    </mat-form-field>
+
+    <div class="new-task-actions">
+      <button mat-stroked-button (click)="showForm = false">Cancelar</button>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="guardarNueva()"
+        [disabled]="!form.titulo"
+      >
+        Guardar
+      </button>
+    </div>
+  </mat-card>
+
+  <!-- PESTAÑAS + LISTA -->
+  <mat-card class="tabs-card">
+    <div class="tabs-header">
+      <button
+        mat-button
+        [class.tab-active]="tab === 'ACTIVAS'"
+        (click)="tab = 'ACTIVAS'"
+      >
+        Activas ({{ pendientesCount() }})
+      </button>
+
+      <button
+        mat-button
+        [class.tab-active]="tab === 'COMPLETADAS'"
+        (click)="tab = 'COMPLETADAS'"
+      >
+        Completadas ({{ completadasCount() }})
+      </button>
+    </div>
+
+    <!-- TAB ACTIVAS -->
+    <div *ngIf="tab === 'ACTIVAS'">
+      <div *ngFor="let t of tareasActivas()" class="task-row">
+        <mat-checkbox
+          class="task-check"
+          [checked]="t.estado === 'COMPLETADA'"
+          (change)="toggleComplete(t)"
+        >
+        </mat-checkbox>
+
+        <div class="task-main">
+          <div class="task-title">{{ t.titulo }}</div>
+
+          <div class="task-description" *ngIf="t.descripcion">
+            {{ t.descripcion }}
+          </div>
+
+          <div class="task-meta">
+            <span class="priority-chip" [ngClass]="prioridadClass(t.prioridad)">
+              {{ t.prioridad }}
+            </span>
+            <span class="due-date">
+              Vence: {{ t.fechaVencimiento | date: 'dd/MM/yyyy' }}
+            </span>
+          </div>
+        </div>
+
+        <button mat-icon-button color="warn" (click)="eliminar(t)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+
+      <div class="empty" *ngIf="!tareasActivas().length">
+        No hay tareas activas.
+      </div>
+    </div>
+
+    <!-- TAB COMPLETADAS -->
+    <div *ngIf="tab === 'COMPLETADAS'">
+      <div *ngFor="let t of tareasCompletadas()" class="task-row task-row--completed">
+        <mat-checkbox class="task-check" [checked]="true" disabled>
+        </mat-checkbox>
+
+        <div class="task-main">
+          <div class="task-title task-title--completed">{{ t.titulo }}</div>
+
+          <div class="task-description" *ngIf="t.descripcion">
+            {{ t.descripcion }}
+          </div>
+
+          <div class="task-meta">
+            <span class="priority-chip" [ngClass]="prioridadClass(t.prioridad)">
+              {{ t.prioridad }}
+            </span>
+            <span class="due-date">
+              Completada:
+              {{
+                t.fechaFinalizacion
+                  ? (t.fechaFinalizacion | date: 'dd/MM/yyyy')
+                  : (t.fechaVencimiento | date: 'dd/MM/yyyy')
+              }}
+            </span>
+          </div>
+        </div>
+
+        <button mat-icon-button color="warn" (click)="eliminar(t)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+
+      <div class="empty" *ngIf="!tareasCompletadas().length">
+        Aún no tienes tareas completadas.
+      </div>
+    </div>
+  </mat-card>
+</div>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\tareas-page\tareas-page.scss
+Carpeta: components\tareas-page
+Archivo: tareas-page.scss
+Extensión: .scss
+Tamaño: 4.2 KB
+--------------------------------------------------------------------------------
+.tasks-page {
+  padding: 24px 32px;
+  min-height: calc(100vh - 64px);
+  color: #f5f5ff;
+  background: radial-gradient(circle at top left, #181735 0, #050612 55%);
+}
+
+/* HEADER */
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    margin: 4px 0 0;
+    font-size: 14px;
+    opacity: 0.85;
+  }
+
+  button {
+    border-radius: 999px;
+    padding: 0 20px;
+    font-weight: 600;
+    box-shadow: 0 0 18px rgba(80, 140, 255, 0.6);
+  }
+
+  mat-icon {
+    margin-right: 4px;
+  }
+}
+
+/* KPIs */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  border-radius: 18px;
+  padding: 12px 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+  color: #f9fbff;
+
+  .kpi-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.8;
+  }
+
+  .kpi-value {
+    margin-top: 8px;
+    font-size: 24px;
+    font-weight: 700;
+  }
+}
+
+.kpi-total {
+  background: linear-gradient(135deg, #1c2333, #252b3f);
+}
+
+.kpi-pendientes {
+  background: linear-gradient(135deg, #2845ff, #6a8dff);
+}
+
+.kpi-completadas {
+  background: linear-gradient(135deg, #21c98b, #6df3b7);
+}
+
+/* NUEVA TAREA */
+.new-task-card {
+  margin-bottom: 24px;
+  border-radius: 18px;
+  padding: 16px 18px;
+  background: rgba(10, 15, 50, 0.95);
+  color: #f9fbff;
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 18px;
+  }
+}
+
+.new-task-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.full-width {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.new-task-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  button {
+    border-radius: 999px;
+  }
+}
+
+/* TABS + LISTA */
+.tabs-card {
+  border-radius: 18px;
+  padding: 16px 18px 8px;
+  background: rgba(8, 12, 38, 0.98);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+}
+
+.tabs-header {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  button {
+    border-radius: 999px;
+    text-transform: none;
+    font-weight: 500;
+    color: #d2d7ff;
+  }
+
+  .tab-active {
+    background: linear-gradient(135deg, #8b5cff, #ff5fd1);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(153, 102, 255, 0.7);
+  }
+}
+
+/* TARJETAS DE TAREA */
+.task-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 4px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  background: rgba(18, 25, 60, 0.85);
+
+  .task-main {
+    flex: 1;
+  }
+
+  .task-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .task-title--completed {
+    text-decoration: line-through;
+    opacity: 0.65;
+  }
+
+  .task-description {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-bottom: 4px;
+  }
+
+  .task-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    align-items: center;
+    opacity: 0.9;
+  }
+
+  .due-date {
+    opacity: 0.85;
+  }
+}
+
+.task-row--completed {
+  background: rgba(16, 40, 32, 0.85);
+}
+
+.task-check {
+  margin-top: 4px;
+}
+
+/* PRIORIDAD */
+.priority-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.priority--alta {
+  background: rgba(255, 94, 122, 0.14);
+  color: #ff8ba3;
+}
+
+.priority--media {
+  background: rgba(255, 193, 112, 0.16);
+  color: #ffd27f;
+}
+
+.priority--baja {
+  background: rgba(120, 220, 255, 0.14);
+  color: #86e3ff;
+}
+
+/* SIN DATOS */
+.empty {
+  padding: 16px 4px 8px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* RESPONSIVE */
+@media (max-width: 960px) {
+  .tasks-page {
+    padding: 16px;
+  }
+
+  .kpi-row {
+    grid-template-columns: 1fr;
+  }
+
+  .new-task-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    button {
+      align-self: stretch;
+      justify-content: center;
+    }
+  }
+
+  .new-task-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\tareas-page\tareas-page.ts
+Carpeta: components\tareas-page
+Archivo: tareas-page.ts
+Extensión: .ts
+Tamaño: 5.5 KB
+--------------------------------------------------------------------------------
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+
+import { TareasService } from '../../services/tareas.service';
+import { UsuariosService } from '../../services/usuarios.service';
+import { TareaDTO } from '../../models/dtos';
+import { Prioridad } from '../../models/enums';
+
+@Component({
+  standalone: true,
+  selector: 'app-tareas-page',
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule,
+    MatListModule,
+    MatCheckboxModule,
+    MatSnackBarModule,
+    MatDatepickerModule,
+    MatNativeDateModule
+  ],
+  templateUrl: './tareas-page.html',
+  styleUrl: './tareas-page.scss'
+})
+export class TareasPageComponent implements OnInit {
+
+  private tareasSrv = inject(TareasService);
+  private usuariosSrv = inject(UsuariosService);
+  private snack = inject(MatSnackBar);
+
+  usuarioId: number | null = null;
+
+  // Todas las tareas del usuario logueado
+  tareas = signal<TareaDTO[]>([]);
+
+  // Tab actual
+  tab: 'ACTIVAS' | 'COMPLETADAS' = 'ACTIVAS';
+
+  // Formulario de nueva tarea
+  showForm = false;
+  form: {
+    titulo: string;
+    descripcion: string;
+    prioridad: Prioridad;
+    fechaVenc: Date;
+    duracion: number; // minutos
+  } = {
+    titulo: '',
+    descripcion: '',
+    prioridad: 'MEDIA',
+    fechaVenc: new Date(),
+    duracion: 60
+  };
+
+  readonly PRIORIDADES: Prioridad[] = ['BAJA', 'MEDIA', 'ALTA'];
+
+  ngOnInit(): void {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+    this.cargar();
+  }
+
+  // ===== Carga =====
+  cargar() {
+    this.usuarioId = this.usuariosSrv.getUsuarioId();
+    if (!this.usuarioId) {
+      this.tareas.set([]);
+      return;
+    }
+
+    this.tareasSrv.listar().subscribe(list => {
+      const mias = list.filter(t => t.usuario?.id === this.usuarioId);
+      this.tareas.set(mias);
+    });
+  }
+
+  // ===== KPIs =====
+  totalTareas() {
+    return this.tareas().length;
+  }
+
+  pendientesCount() {
+    return this.tareas().filter(t => t.estado !== 'COMPLETADA').length;
+  }
+
+  completadasCount() {
+    return this.tareas().filter(t => t.estado === 'COMPLETADA').length;
+  }
+
+  // ===== Listas por pestaña =====
+  tareasActivas(): TareaDTO[] {
+    return this.tareas().filter(t => t.estado !== 'COMPLETADA');
+  }
+
+  tareasCompletadas(): TareaDTO[] {
+    return this.tareas().filter(t => t.estado === 'COMPLETADA');
+  }
+
+  // ===== UI =====
+  cambiarTab(tab: 'ACTIVAS' | 'COMPLETADAS') {
+    this.tab = tab;
+  }
+
+  abrirNueva() {
+    this.showForm = true;
+    this.form = {
+      titulo: '',
+      descripcion: '',
+      prioridad: 'MEDIA',
+      fechaVenc: new Date(),
+      duracion: 60
+    };
+  }
+
+  cancelarNueva() {
+    this.showForm = false;
+    this.form = {
+      titulo: '',
+      descripcion: '',
+      prioridad: 'MEDIA',
+      fechaVenc: new Date(),
+      duracion: 60
+    };
+  }
+
+  // Cambio desde el input type="date"
+  onFechaChange(value: string | null) {
+    if (value) {
+      this.form.fechaVenc = new Date(value);
+    }
+  }
+
+  // ===== Crear / actualizar estado =====
+  guardarNueva() {
+    if (!this.usuarioId) {
+      this.snack.open('Selecciona/crea un usuario primero', 'OK', { duration: 2000 });
+      return;
+    }
+
+    const dto: TareaDTO = {
+      titulo: this.form.titulo.trim(),
+      descripcion: this.form.descripcion?.trim(),
+      prioridad: this.form.prioridad,
+      fechaVencimiento: this.form.fechaVenc.toISOString().substring(0, 10),
+      usuario: { id: this.usuarioId }
+    };
+
+    if (!dto.titulo) {
+      this.snack.open('El título es obligatorio', 'OK', { duration: 2000 });
+      return;
+    }
+
+    this.tareasSrv.crear(dto).subscribe({
+      next: () => {
+        this.snack.open('Tarea creada', 'OK', { duration: 1500 });
+        this.cancelarNueva();
+        this.cargar();
+      },
+      error: () => this.snack.open('No se pudo crear la tarea', 'OK', { duration: 2000 })
+    });
+  }
+
+  completar(t: TareaDTO) {
+    // Solo completamos si no está ya completada
+    if (!t.id || t.estado === 'COMPLETADA') return;
+
+    this.tareasSrv.completar(t.id).subscribe(() => {
+      this.snack.open('Tarea completada', 'OK', { duration: 1200 });
+      this.cargar();
+    });
+  }
+
+  eliminar(t: TareaDTO) {
+    if (!t.id) return;
+    if (!confirm(`¿Eliminar "${t.titulo}"?`)) return;
+
+    this.tareasSrv.eliminar(t.id).subscribe(() => {
+      this.snack.open('Tarea eliminada', 'OK', { duration: 1200 });
+      this.cargar();
+    });
+  }
+
+  prioridadClass(p: Prioridad) {
+    return {
+      'priority--alta': p === 'ALTA',
+      'priority--media': p === 'MEDIA',
+      'priority--baja': p === 'BAJA'
+    };
+  }
+}
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\usuarios-page\usuarios-page.html
+Carpeta: components\usuarios-page
+Archivo: usuarios-page.html
+Extensión: .html
+Tamaño: 910.0 B
+--------------------------------------------------------------------------------
+<mat-card class="form">
+  <h2>Crear usuario</h2>
+  <div class="grid">
+    <mat-form-field><mat-label>Nombre</mat-label><input matInput [(ngModel)]="nuevo.nombre"></mat-form-field>
+    <mat-form-field><mat-label>Email</mat-label><input matInput [(ngModel)]="nuevo.email"></mat-form-field>
+    <mat-form-field><mat-label>Contraseña</mat-label><input matInput type="password" [(ngModel)]="nuevo.contrasena"></mat-form-field>
+  </div>
+  <button mat-raised-button color="primary" (click)="crear()">Crear</button>
+</mat-card>
+
+<mat-card>
+  <h2>Usuarios</h2>
+  <mat-nav-list>
+    <a mat-list-item *ngFor="let u of lista()">
+      <mat-icon matListItemIcon>person</mat-icon>
+      <div matListItemTitle>{{u.nombre}}</div>
+      <div matListItemLine>{{u.email}}</div>
+      <button mat-stroked-button style="margin-left:auto" (click)="usar(u)">Usar</button>
+    </a>
+  </mat-nav-list>
+</mat-card>
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\usuarios-page\usuarios-page.scss
+Carpeta: components\usuarios-page
+Archivo: usuarios-page.scss
+Extensión: .scss
+Tamaño: 174.0 B
+--------------------------------------------------------------------------------
+.form { margin-bottom: 16px; }
+.grid { display: grid; gap: 12px; grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+================================================================================
+Ruta: D:\NEVOA\frontend\src\app\components\usuarios-page\usuarios-page.ts
+Carpeta: components\usuarios-page
+Archivo: usuarios-page.ts
+Extensión: .ts
+Tamaño: 1.7 KB
+--------------------------------------------------------------------------------
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatListModule } from '@angular/material/list';
+import { MatIconModule } from '@angular/material/icon';
+import { UsuariosService } from '../../services/usuarios.service';
+import { UsuarioDTO } from '../../models/dtos';
+import { Router } from '@angular/router';
+
+@Component({
+  standalone: true,
+  selector: 'app-usuarios-page',
+  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatListModule, MatIconModule],
+  templateUrl: './usuarios-page.html',
+  styleUrl: './usuarios-page.scss'
+})
+export class UsuariosPageComponent implements OnInit {
+  private srv = inject(UsuariosService);
+  private router = inject(Router);
+
+  lista = signal<UsuarioDTO[]>([]);
+  nuevo: UsuarioDTO = { nombre: '', email: '', contrasena: '' };
+
+  ngOnInit(): void { this.srv.listar().subscribe(v => this.lista.set(v)); }
+
+  crear() {
+    if (!this.nuevo.nombre || !this.nuevo.email || !this.nuevo.contrasena) return;
+    this.srv.crear(this.nuevo).subscribe(u => {
+      this.nuevo = { nombre: '', email: '', contrasena: '' };
+      this.srv.listar().subscribe(v => this.lista.set(v));
+    });
+  }
+
+  usar(u: UsuarioDTO) {
+    if (!u.id) return;
+    this.srv.setUsuarioId(u.id);
+    this.router.navigate(['/app/dashboard']);
+  }
+}

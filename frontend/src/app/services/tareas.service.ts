@@ -11,7 +11,7 @@ export class TareasService {
 
   listar(): Observable<TareaDTO[]> {
     return this.http.get<TareaDTO[]>(this.base);
-  }
+}
 
   crear(dto: TareaDTO): Observable<TareaDTO> {
     return this.http.post<TareaDTO>(this.base, dto);
@@ -55,4 +55,13 @@ export class TareasService {
   icsUrl(usuarioId: number, minutosBloque = 30): string {
     return `${environment.apiUrl}/calendar/usuario/${usuarioId}.ics?minutosBloqueEvento=${minutosBloque}`;
   }
+
+  iniciarTarea(id: number): Observable<TareaDTO> {
+    return this.http.post<TareaDTO>(`${this.base}/${id}/iniciar`, {});
+  }
+
+  completarTarea(id: number): Observable<TareaDTO> {
+    return this.http.post<TareaDTO>(`${this.base}/${id}/completar`, {});
+  }
+
 }

@@ -41,11 +41,9 @@ public class PomodoroSesionEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date finPlanificado;
 
-    // Fecha y hora de finalización real
     @Temporal(TemporalType.TIMESTAMP)
     private Date finReal;
 
-    // Duración en minutos
     @NotNull(message = "La duración debe ser proporcionada")
     private Integer duracionMin;
 
@@ -54,7 +52,6 @@ public class PomodoroSesionEntity {
     @JoinColumn(name = "usuario_id", nullable = false)
     private UsuarioEntity usuario;
 
-    // Generar los valores predeterminados
     @PrePersist
     public void prePersist() {
         if (estado == null) estado = EstadoPomodoro.PENDIENTE; // El estado predeterminado es "PENDIENTE"
