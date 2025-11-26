@@ -14,16 +14,6 @@ public class NotaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Muchas notas pertenecen a un usuario
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "usuario_id", nullable = false)
-    private UsuarioEntity usuario;
-
-    // Una nota puede estar asociada a una tarea (opcional)
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "tarea_id")
-    private TareaEntity tarea;
-
     @NotNull(message = "El título no puede ser nulo")
     @Size(min = 3, max = 150, message = "El título debe tener entre 3 y 150 caracteres")
     @Column(nullable = false)
@@ -31,11 +21,21 @@ public class NotaEntity {
 
     @NotNull(message = "La categoría no puede ser nula")
     @Size(min = 1, max = 50, message = "La categoría debe tener entre 1 y 50 caracteres")
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String categoria;
 
     @NotNull(message = "El contenido no puede ser nulo")
     @Size(min = 3, max = 1000, message = "El contenido debe tener entre 3 y 1000 caracteres")
     @Column(nullable = false, length = 1000)
     private String contenido;
+
+    // 🔗 Nota siempre pertenece a un usuario
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private UsuarioEntity usuario;
+
+    // 🔗 Nota opcionalmente está ligada a una tarea
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tarea_id")
+    private TareaEntity tarea;
 }

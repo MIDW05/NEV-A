@@ -90,4 +90,15 @@ public class TareaController {
         }
     }
 
+    @PostMapping("/{tareaId}/proyectos/{proyectoId}")
+    public ResponseEntity<TareaDTO> asignarProyecto(@PathVariable Long tareaId,
+                                                    @PathVariable Long proyectoId) {
+        return ResponseEntity.ok(tareaService.asignarProyecto(tareaId, proyectoId));
+    }
+
+    @DeleteMapping("/{tareaId}/proyectos")
+    public ResponseEntity<TareaDTO> quitarProyecto(@PathVariable Long tareaId) {
+        return ResponseEntity.ok(tareaService.quitarProyecto(tareaId));
+    }
+
 }

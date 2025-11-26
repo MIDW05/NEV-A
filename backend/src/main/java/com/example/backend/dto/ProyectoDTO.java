@@ -6,10 +6,8 @@ import lombok.Data;
 
 @Data
 public class ProyectoDTO {
-    private Long id;
 
-    @NotNull(message = "El usuario es obligatorio")
-    private Long usuarioId;
+    private Long id;
 
     @NotNull(message = "El nombre del proyecto no puede ser nulo")
     @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
@@ -17,4 +15,8 @@ public class ProyectoDTO {
 
     @Size(max = 500, message = "La descripción no puede superar los 500 caracteres")
     private String descripcion;
+
+    // 🔗 Usuario dueño del proyecto
+    @NotNull(message = "El usuario del proyecto no puede ser nulo")
+    private Long usuarioId;
 }

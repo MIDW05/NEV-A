@@ -9,12 +9,6 @@ public class NotaDTO {
 
     private Long id;
 
-    @NotNull(message = "El usuario es obligatorio")
-    private Long usuarioId;
-
-    // Opcional: permite enlazar la nota con una tarea concreta
-    private Long tareaId;
-
     @NotNull(message = "El título no puede ser nulo")
     @Size(min = 3, max = 150, message = "El título debe tener entre 3 y 150 caracteres")
     private String titulo;
@@ -26,4 +20,11 @@ public class NotaDTO {
     @NotNull(message = "El contenido no puede ser nulo")
     @Size(min = 3, max = 1000, message = "El contenido debe tener entre 3 y 1000 caracteres")
     private String contenido;
+
+    // 🔗 Usuario dueño de la nota
+    @NotNull(message = "El usuario de la nota no puede ser nulo")
+    private Long usuarioId;
+
+    // 🔗 Tarea asociada (opcional)
+    private Long tareaId;
 }

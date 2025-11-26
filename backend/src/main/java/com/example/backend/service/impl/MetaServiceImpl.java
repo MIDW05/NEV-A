@@ -68,10 +68,7 @@ public class MetaServiceImpl implements MetaService {
         metaEntity.setTipoMeta(metaDTO.getTipoMeta());
         metaEntity.setFechaLimite(metaDTO.getFechaLimite());
 
-        if (metaDTO.getUsuarioId() != null &&
-                (metaEntity.getUsuario() == null ||
-                        !metaEntity.getUsuario().getId().equals(metaDTO.getUsuarioId()))) {
-
+        if (metaDTO.getUsuarioId() != null) {
             UsuarioEntity usuario = usuarioRepository.findById(metaDTO.getUsuarioId())
                     .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
             metaEntity.setUsuario(usuario);

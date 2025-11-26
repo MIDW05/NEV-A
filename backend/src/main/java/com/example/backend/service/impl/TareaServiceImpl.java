@@ -2,9 +2,11 @@ package com.example.backend.service.impl;
 
 import com.example.backend.dto.CalendarItemDTO;
 import com.example.backend.dto.TareaDTO;
+import com.example.backend.entity.ProyectoEntity;
 import com.example.backend.entity.TareaEntity;
 import com.example.backend.enums.EstadoTarea;
 import com.example.backend.mapper.TareaMapper;
+import com.example.backend.repository.ProyectoRepository;
 import com.example.backend.repository.TareaRepository;
 import com.example.backend.service.TareaService;
 import jakarta.persistence.EntityNotFoundException;
@@ -12,7 +14,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,7 @@ public class TareaServiceImpl implements TareaService {
 
     @Autowired private TareaRepository tareaRepository;
     @Autowired private TareaMapper tareaMapper;
+    @Autowired private ProyectoRepository proyectoRepository;
 
     @Override
     public List<TareaDTO> listar() {
@@ -60,7 +62,7 @@ public class TareaServiceImpl implements TareaService {
         tareaRepository.deleteById(id);
     }
 
-    // ------- NUEVO --------
+    // ------- LÓGICA DE ESTADO / CALENDARIO --------
 
     private void actualizarVencidasParaUsuario(Long usuarioId) {
         Date ahora = new Date();
@@ -77,15 +79,17 @@ public class TareaServiceImpl implements TareaService {
                 }
             }
         }
-        if (cambios) tareaRepository.saveAll(todas);
+        if (cambios) {
+            tareaRepository.saveAll(todas);
+        }
     }
 
     @Override
     public List<TareaDTO> pendientes(Long usuarioId) {
         actualizarVencidasParaUsuario(usuarioId);
         return tareaRepository
-                .findByUsuarioIdAndEstadoInOrderByFechaVencimientoAsc(usuarioId,
-                        Arrays.asList(EstadoTarea.PENDIENTE, EstadoTarea.EN_CURSO))
+                .findByUsuarioIdAndEstadoInOrderByFechaVencimientoAsc(
+                        usuarioId, Arrays.asList(EstadoTarea.PENDIENTE, EstadoTarea.EN_CURSO))
                 .stream().map(tareaMapper::tareaEntityATareaDTO).collect(Collectors.toList());
     }
 
@@ -93,15 +97,10 @@ public class TareaServiceImpl implements TareaService {
     public List<TareaDTO> proximasAVencer(Long usuarioId, int dias) {
         actualizarVencidasParaUsuario(usuarioId);
         Date ahora = new Date();
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(ahora);
-        Date desde = cal.getTime();
-        cal.add(Calendar.DATE, dias);
-        Date hasta = cal.getTime();
-
+        Date hasta = new Date(ahora.getTime() + dias * 24L * 60L * 60L * 1000L);
         return tareaRepository
                 .findByUsuarioIdAndEstadoInAndFechaVencimientoBetweenOrderByFechaVencimientoAsc(
-                        usuarioId, Arrays.asList(EstadoTarea.PENDIENTE, EstadoTarea.EN_CURSO), desde, hasta)
+                        usuarioId, Arrays.asList(EstadoTarea.PENDIENTE, EstadoTarea.EN_CURSO), ahora, hasta)
                 .stream().map(tareaMapper::tareaEntityATareaDTO).collect(Collectors.toList());
     }
 
@@ -158,5 +157,29 @@ public class TareaServiceImpl implements TareaService {
             out.add(c);
         }
         return out;
+    }
+
+    // ------- NUEVO: enlace Tarea <-> Proyecto --------
+
+    @Override
+    @Transactional
+    public TareaDTO asignarProyecto(Long tareaId, Long proyectoId) {
+        TareaEntity tarea = tareaRepository.findById(tareaId)
+                .orElseThrow(() -> new EntityNotFoundException("Tarea no encontrada"));
+        ProyectoEntity proyecto = proyectoRepository.findById(proyectoId)
+                .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
+
+        tarea.setProyecto(proyecto);
+        return tareaMapper.tareaEntityATareaDTO(tareaRepository.save(tarea));
+    }
+
+    @Override
+    @Transactional
+    public TareaDTO quitarProyecto(Long tareaId) {
+        TareaEntity tarea = tareaRepository.findById(tareaId)
+                .orElseThrow(() -> new EntityNotFoundException("Tarea no encontrada"));
+
+        tarea.setProyecto(null);
+        return tareaMapper.tareaEntityATareaDTO(tareaRepository.save(tarea));
     }
 }

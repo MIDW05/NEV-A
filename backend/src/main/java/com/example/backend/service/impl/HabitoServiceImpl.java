@@ -22,10 +22,10 @@ public class HabitoServiceImpl implements HabitoService {
     private HabitoRepository habitoRepository;
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    private HabitoMapper habitoMapper;
 
     @Autowired
-    private HabitoMapper habitoMapper;
+    private UsuarioRepository usuarioRepository;
 
     @Override
     public List<HabitoDTO> listar() {
@@ -58,23 +58,20 @@ public class HabitoServiceImpl implements HabitoService {
     }
 
     @Override
+    @Transactional
     public HabitoDTO editar(HabitoDTO habitoDTO) {
         HabitoEntity habitoEntity = habitoRepository.findById(habitoDTO.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Hábito no encontrado"));
 
         habitoEntity.setNombre(habitoDTO.getNombre());
 
-        if (habitoDTO.getUsuarioId() != null &&
-                (habitoEntity.getUsuario() == null ||
-                        !habitoEntity.getUsuario().getId().equals(habitoDTO.getUsuarioId()))) {
-
+        if (habitoDTO.getUsuarioId() != null) {
             UsuarioEntity usuario = usuarioRepository.findById(habitoDTO.getUsuarioId())
                     .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
             habitoEntity.setUsuario(usuario);
         }
 
-        HabitoDTO habitoDTO1 =
-                habitoMapper.habitoEntityAHabitoDTO(habitoRepository.save(habitoEntity));
+        HabitoDTO habitoDTO1 = habitoMapper.habitoEntityAHabitoDTO(habitoRepository.save(habitoEntity));
         return habitoDTO1;
     }
 

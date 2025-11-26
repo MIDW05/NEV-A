@@ -4,105 +4,99 @@ import com.example.backend.dto.PomodoroDTO;
 import com.example.backend.entity.PomodoroSesionEntity;
 import com.example.backend.entity.TareaEntity;
 import com.example.backend.entity.UsuarioEntity;
-import com.example.backend.enums.TipoIntervalo;
+import com.example.backend.enums.EstadoPomodoro;
 import com.example.backend.mapper.PomodoroMapper;
-import com.example.backend.repository.PomodoroSesionRepository;
+import com.example.backend.repository.PomodoroRepository;
 import com.example.backend.repository.TareaRepository;
 import com.example.backend.repository.UsuarioRepository;
 import com.example.backend.service.PomodoroService;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PomodoroServiceImpl implements PomodoroService {
 
-    private static final int FOCUS = 25, SHORT = 5, LONG = 15;
+    @Autowired
+    private PomodoroRepository pomodoroRepository;
 
-    @Autowired private PomodoroSesionRepository repo;
-    @Autowired private UsuarioRepository usuarioRepo;
-    @Autowired private TareaRepository tareaRepo;
-    @Autowired private PomodoroMapper mapper;
+    @Autowired
+    private TareaRepository tareaRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PomodoroMapper pomodoroMapper;
+
+    @Override
+    public List<PomodoroDTO> listar() {
+        // Asegúrate de que nunca sea nulo
+        return pomodoroRepository.findAll().stream()
+                .map(pomodoroMapper::pomodoroEntityAPomodoroDTO)
+                .collect(Collectors.toList());
+    }
 
     @Override
     @Transactional
-    public PomodoroDTO iniciar(Long usuarioId, Long tareaId, TipoIntervalo tipo, Integer duracionMin) {
-        UsuarioEntity usuario = usuarioRepo.findById(usuarioId)
+    public PomodoroDTO guardar(PomodoroDTO pomodoroDTO) {
+        PomodoroSesionEntity pomodoroEntity = pomodoroMapper.pomodoroDTOAPomodoroEntity(pomodoroDTO);
+
+        UsuarioEntity usuario = usuarioRepository.findById(pomodoroDTO.getUsuarioId())
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
-        TareaEntity tarea = (tareaId != null) ? tareaRepo.findById(tareaId).orElse(null) : null;
 
-        int dur = (duracionMin != null) ? duracionMin :
-                (tipo == TipoIntervalo.ENFOQUE ? FOCUS :
-                        tipo == TipoIntervalo.DESCANSO_CORTO ? SHORT : LONG);
+        TareaEntity tarea = null;
+        if (pomodoroDTO.getTareaId() != null) {
+            tarea = tareaRepository.findById(pomodoroDTO.getTareaId())
+                    .orElseThrow(() -> new EntityNotFoundException("Tarea no encontrada"));
+        }
 
-        Date inicio = new Date();
-        Date finPlan = new Date(inicio.getTime() + dur * 60L * 1000L);
+        pomodoroEntity.setUsuario(usuario);
+        pomodoroEntity.setTarea(tarea);
 
-        PomodoroSesionEntity e = new PomodoroSesionEntity();
-        e.setUsuario(usuario);
-        e.setTarea(tarea);
-        e.setTipo(tipo);
-        e.setInicio(inicio);
-        e.setFinPlanificado(finPlan);
-        e.setDuracionMin(dur);
-        e.setActivo(true);
-
-        e = repo.save(e);
-        return mapper.entityToDto(e);
+        return pomodoroMapper.pomodoroEntityAPomodoroDTO(pomodoroRepository.save(pomodoroEntity));
     }
 
     @Override
-    @Transactional
-    public PomodoroDTO finalizar(Long sesionId) {
-        PomodoroSesionEntity e = repo.findById(sesionId)
-                .orElseThrow(() -> new EntityNotFoundException("Sesión no encontrada"));
-        e.setActivo(false);
-        e.setFinReal(new Date());
-        return mapper.entityToDto(repo.save(e));
+    public PomodoroDTO iniciar(Long id) {
+        PomodoroSesionEntity pomodoro = pomodoroRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Pomodoro no encontrado"));
+
+        pomodoro.setEstado(EstadoPomodoro.ACTIVO);
+        pomodoro.setInicio(new Date());
+        return pomodoroMapper.pomodoroEntityAPomodoroDTO(pomodoroRepository.save(pomodoro));
     }
 
     @Override
-    public PomodoroDTO activo(Long usuarioId) {
-        return repo.findFirstByUsuarioIdAndActivoTrueOrderByInicioDesc(usuarioId)
-                .map(mapper::entityToDto).orElse(null);
+    public PomodoroDTO completar(Long id) {
+        PomodoroSesionEntity pomodoro = pomodoroRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Pomodoro no encontrado"));
+
+        pomodoro.setEstado(EstadoPomodoro.COMPLETADO);
+        pomodoro.setFinReal(new Date());
+        return pomodoroMapper.pomodoroEntityAPomodoroDTO(pomodoroRepository.save(pomodoro));
     }
 
     @Override
-    public List<PomodoroDTO> hoy(Long usuarioId) {
-        Calendar c = Calendar.getInstance();
-        c.set(Calendar.HOUR_OF_DAY, 0); c.set(Calendar.MINUTE, 0);
-        c.set(Calendar.SECOND, 0); c.set(Calendar.MILLISECOND, 0);
-        Date desde = c.getTime();
-        c.add(Calendar.DATE, 1);
-        Date hasta = c.getTime();
-
-        return repo.findByUsuarioIdAndInicioBetweenOrderByInicioAsc(usuarioId, desde, hasta)
-                .stream().map(mapper::entityToDto).toList();
+    public List<PomodoroDTO> tareasPomodoro(Long tareaId) {
+        // Usamos findByTareaId() y devolvemos una lista vacía si no hay resultados
+        List<PomodoroSesionEntity> pomodoros = pomodoroRepository.findByTareaId(tareaId);
+        return pomodoros.isEmpty() ? List.of() : pomodoros.stream()
+                .map(pomodoroMapper::pomodoroEntityAPomodoroDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Map<String, Object>> planCicloEstandar() {
-        // (25/5) x3 + (25/15) => 8 pasos
-        return List.of(
-                paso(TipoIntervalo.ENFOQUE, 25, 1),
-                paso(TipoIntervalo.DESCANSO_CORTO, 5, 2),
-                paso(TipoIntervalo.ENFOQUE, 25, 3),
-                paso(TipoIntervalo.DESCANSO_CORTO, 5, 4),
-                paso(TipoIntervalo.ENFOQUE, 25, 5),
-                paso(TipoIntervalo.DESCANSO_CORTO, 5, 6),
-                paso(TipoIntervalo.ENFOQUE, 25, 7),
-                paso(TipoIntervalo.DESCANSO_LARGO, 15, 8)
-        );
-    }
-
-    private Map<String, Object> paso(TipoIntervalo t, int min, int orden) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("orden", orden);
-        m.put("tipo", t);
-        m.put("minutos", min);
-        return m;
+    public List<PomodoroDTO> usuarioPomodoros(Long usuarioId) {
+        // Usamos findByUsuarioId() y devolvemos una lista vacía si no hay resultados
+        List<PomodoroSesionEntity> pomodoros = pomodoroRepository.findByUsuarioId(usuarioId);
+        return pomodoros.isEmpty() ? List.of() : pomodoros.stream()
+                .map(pomodoroMapper::pomodoroEntityAPomodoroDTO)
+                .collect(Collectors.toList());
     }
 }

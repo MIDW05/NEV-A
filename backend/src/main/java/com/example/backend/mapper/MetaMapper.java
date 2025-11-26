@@ -16,6 +16,8 @@ public interface MetaMapper {
     MetaDTO metaEntityAMetaDTO(MetaEntity metaEntity);
 
     @InheritInverseConfiguration
-    @Mapping(target = "usuario", ignore = true)
+    @Mappings({
+            @Mapping(target = "usuario", ignore = true)
+    })
     MetaEntity metaDTOAMetaEntity(MetaDTO metaDTO);
 }

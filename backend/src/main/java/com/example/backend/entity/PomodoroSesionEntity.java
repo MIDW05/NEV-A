@@ -1,7 +1,8 @@
 package com.example.backend.entity;
 
-import com.example.backend.enums.TipoIntervalo;
+import com.example.backend.enums.EstadoPomodoro;  // Usamos este enum para el estado
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.Date;
@@ -11,30 +12,51 @@ import java.util.Date;
 @Table(name = "pomodoro_sesiones")
 public class PomodoroSesionEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "usuario_id", nullable = false)
-    private UsuarioEntity usuario;
+    // Usamos el enum EstadoPomodoro para gestionar el estado de la sesión
+    @NotNull(message = "El estado no puede ser nulo")
+    @Enumerated(EnumType.STRING)
+    private EstadoPomodoro estado; // El estado es gestionado por este enum
 
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "tarea_id")
-    private TareaEntity tarea; // opcional
+    // Relación con la tarea (opcional)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tarea_id")
+    private TareaEntity tarea;
 
-    @Enumerated(EnumType.STRING) @Column(nullable = false)
-    private TipoIntervalo tipo;
+    // Relación con el proyecto (opcional)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proyecto_id")
+    private ProyectoEntity proyecto;
 
-    @Temporal(TemporalType.TIMESTAMP) @Column(nullable = false)
+    // Fecha y hora de inicio
+    @NotNull(message = "El inicio no puede ser nulo")
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(nullable = false)
     private Date inicio;
 
-    @Temporal(TemporalType.TIMESTAMP) @Column(nullable = false)
+    // Fecha y hora de finalización planificada
+    @Temporal(TemporalType.TIMESTAMP)
     private Date finPlanificado;
 
+    // Fecha y hora de finalización real
     @Temporal(TemporalType.TIMESTAMP)
     private Date finReal;
 
-    @Column(nullable = false)
+    // Duración en minutos
+    @NotNull(message = "La duración debe ser proporcionada")
     private Integer duracionMin;
 
-    @Column(nullable = false)
-    private Boolean activo = true;
+    // Relación con Usuario
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private UsuarioEntity usuario;
+
+    // Generar los valores predeterminados
+    @PrePersist
+    public void prePersist() {
+        if (estado == null) estado = EstadoPomodoro.PENDIENTE; // El estado predeterminado es "PENDIENTE"
+    }
 }

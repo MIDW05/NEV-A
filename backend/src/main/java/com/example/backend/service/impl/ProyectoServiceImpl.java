@@ -22,10 +22,10 @@ public class ProyectoServiceImpl implements ProyectoService {
     private ProyectoRepository proyectoRepository;
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    private ProyectoMapper proyectoMapper;
 
     @Autowired
-    private ProyectoMapper proyectoMapper;
+    private UsuarioRepository usuarioRepository;
 
     @Override
     public List<ProyectoDTO> listar() {
@@ -58,6 +58,7 @@ public class ProyectoServiceImpl implements ProyectoService {
     }
 
     @Override
+    @Transactional
     public ProyectoDTO editar(ProyectoDTO proyectoDTO) {
         ProyectoEntity proyectoEntity = proyectoRepository.findById(proyectoDTO.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
@@ -65,17 +66,13 @@ public class ProyectoServiceImpl implements ProyectoService {
         proyectoEntity.setNombre(proyectoDTO.getNombre());
         proyectoEntity.setDescripcion(proyectoDTO.getDescripcion());
 
-        if (proyectoDTO.getUsuarioId() != null &&
-                (proyectoEntity.getUsuario() == null ||
-                        !proyectoEntity.getUsuario().getId().equals(proyectoDTO.getUsuarioId()))) {
-
+        if (proyectoDTO.getUsuarioId() != null) {
             UsuarioEntity usuario = usuarioRepository.findById(proyectoDTO.getUsuarioId())
                     .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
             proyectoEntity.setUsuario(usuario);
         }
 
-        ProyectoDTO proyectoDTO1 =
-                proyectoMapper.proyectoEntityAProyectoDTO(proyectoRepository.save(proyectoEntity));
+        ProyectoDTO proyectoDTO1 = proyectoMapper.proyectoEntityAProyectoDTO(proyectoRepository.save(proyectoEntity));
         return proyectoDTO1;
     }
 

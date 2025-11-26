@@ -16,6 +16,9 @@ public interface ProyectoMapper {
     ProyectoDTO proyectoEntityAProyectoDTO(ProyectoEntity proyectoEntity);
 
     @InheritInverseConfiguration
-    @Mapping(target = "usuario", ignore = true)
+    @Mappings({
+            // usuario se resuelve en el servicio con UsuarioRepository
+            @Mapping(target = "usuario", ignore = true)
+    })
     ProyectoEntity proyectoDTOAProyectoEntity(ProyectoDTO proyectoDTO);
 }

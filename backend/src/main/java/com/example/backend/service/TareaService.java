@@ -21,4 +21,8 @@ public interface TareaService {
     TareaDTO completar(Long tareaId);
 
     List<CalendarItemDTO> calendario(Long usuarioId, Date desde, Date hasta);
+
+    // 🔗 Enlace tarea-proyecto
+    TareaDTO asignarProyecto(Long tareaId, Long proyectoId);
+    TareaDTO quitarProyecto(Long tareaId);
 }

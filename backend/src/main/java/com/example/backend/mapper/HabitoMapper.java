@@ -16,6 +16,8 @@ public interface HabitoMapper {
     HabitoDTO habitoEntityAHabitoDTO(HabitoEntity habitoEntity);
 
     @InheritInverseConfiguration
-    @Mapping(target = "usuario", ignore = true)
+    @Mappings({
+            @Mapping(target = "usuario", ignore = true)
+    })
     HabitoEntity habitoDTOAHabitoEntity(HabitoDTO habitoDTO);
 }

@@ -9,10 +9,8 @@ import java.util.Date;
 
 @Data
 public class MetaDTO {
-    private Long id;
 
-    @NotNull(message = "El usuario es obligatorio")
-    private Long usuarioId;
+    private Long id;
 
     @NotNull(message = "El título no puede ser nulo")
     @Size(min = 3, max = 150, message = "El título debe tener entre 3 y 150 caracteres")
@@ -22,6 +20,12 @@ public class MetaDTO {
     @Size(min = 3, max = 500, message = "La descripción debe tener entre 3 y 500 caracteres")
     private String descripcion;
 
+    @NotNull(message = "El tipo de meta no puede ser nulo")
     private TipoMeta tipoMeta;
+
     private Date fechaLimite;
+
+    // 🔗 Usuario dueño de la meta
+    @NotNull(message = "El usuario de la meta no puede ser nulo")
+    private Long usuarioId;
 }

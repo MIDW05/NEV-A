@@ -1,15 +1,20 @@
 package com.example.backend.service;
 
 import com.example.backend.dto.PomodoroDTO;
-import com.example.backend.enums.TipoIntervalo;
 
 import java.util.List;
-import java.util.Map;
 
 public interface PomodoroService {
-    PomodoroDTO iniciar(Long usuarioId, Long tareaId, TipoIntervalo tipo, Integer duracionMin);
-    PomodoroDTO finalizar(Long sesionId);
-    PomodoroDTO activo(Long usuarioId);
-    List<PomodoroDTO> hoy(Long usuarioId);
-    List<Map<String, Object>> planCicloEstandar(); // guía (8 pasos)
+
+    List<PomodoroDTO> listar();  // Obtener todas las sesiones Pomodoro
+
+    PomodoroDTO guardar(PomodoroDTO pomodoroDTO);  // Guardar nueva sesión Pomodoro
+
+    PomodoroDTO iniciar(Long id);  // Iniciar una sesión Pomodoro
+
+    PomodoroDTO completar(Long id);  // Completar una sesión Pomodoro
+
+    List<PomodoroDTO> tareasPomodoro(Long tareaId);  // Obtener Pomodoros por tarea
+
+    List<PomodoroDTO> usuarioPomodoros(Long usuarioId);  // Obtener Pomodoros por usuario
 }

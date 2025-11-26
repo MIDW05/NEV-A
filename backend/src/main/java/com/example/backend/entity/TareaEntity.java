@@ -18,28 +18,34 @@ public class TareaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull @Size(min = 3, max = 100)
+    @NotNull(message = "El título no puede ser nulo")
+    @Size(min = 3, max = 100, message = "El título debe tener entre 3 y 100 caracteres")
     @Column(nullable = false)
     private String titulo;
 
-    @Size(max = 500)
+    @Size(max = 500, message = "La descripción no puede superar los 500 caracteres")
     private String descripcion;
 
-    @NotNull
+    @NotNull(message = "La prioridad no puede ser nula")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Prioridad prioridad;
 
-    @NotNull
+    @NotNull(message = "La fecha de vencimiento no puede ser nula")
     @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)
     private Date fechaVencimiento;
 
+    // 🔗 Tarea pertenece a un usuario
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "usuario_id", nullable = false)
-    private UsuarioEntity usuario; // <-- quitar el ";;" que tenías
+    private UsuarioEntity usuario;
 
-    // NUEVO (sencillo)
+    // 🔗 Tarea opcionalmente se asocia a un proyecto
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proyecto_id")
+    private ProyectoEntity proyecto;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoTarea estado;
@@ -54,12 +60,13 @@ public class TareaEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date fechaFinalizacion;
 
-    private Integer duracionEstimadaMinutos; // para el bloque de calendario
+    // duración para el calendario (en minutos)
+    private Integer duracionEstimadaMinutos;
 
     @PrePersist
     public void prePersist() {
         if (fechaCreacion == null) fechaCreacion = new Date();
         if (estado == null) estado = EstadoTarea.PENDIENTE;
-        if (duracionEstimadaMinutos == null) duracionEstimadaMinutos = 60; // 1h por defecto
+        if (duracionEstimadaMinutos == null) duracionEstimadaMinutos = 60;
     }
 }

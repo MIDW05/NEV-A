@@ -48,12 +48,10 @@ public class NotaServiceImpl implements NotaService {
     public NotaDTO guardar(NotaDTO notaDTO) {
         NotaEntity notaEntity = notaMapper.notaDTOANotaEntity(notaDTO);
 
-        // Usuario obligatorio
         UsuarioEntity usuario = usuarioRepository.findById(notaDTO.getUsuarioId())
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
         notaEntity.setUsuario(usuario);
 
-        // Tarea opcional
         if (notaDTO.getTareaId() != null) {
             TareaEntity tarea = tareaRepository.findById(notaDTO.getTareaId())
                     .orElseThrow(() -> new EntityNotFoundException("Tarea no encontrada"));
@@ -82,17 +80,10 @@ public class NotaServiceImpl implements NotaService {
         notaEntity.setCategoria(notaDTO.getCategoria());
         notaEntity.setContenido(notaDTO.getContenido());
 
-        // Actualizar usuario si cambió
-        if (notaDTO.getUsuarioId() != null &&
-                (notaEntity.getUsuario() == null ||
-                        !notaEntity.getUsuario().getId().equals(notaDTO.getUsuarioId()))) {
+        UsuarioEntity usuario = usuarioRepository.findById(notaDTO.getUsuarioId())
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+        notaEntity.setUsuario(usuario);
 
-            UsuarioEntity usuario = usuarioRepository.findById(notaDTO.getUsuarioId())
-                    .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
-            notaEntity.setUsuario(usuario);
-        }
-
-        // Actualizar tarea (o dejarla en null)
         if (notaDTO.getTareaId() != null) {
             TareaEntity tarea = tareaRepository.findById(notaDTO.getTareaId())
                     .orElseThrow(() -> new EntityNotFoundException("Tarea no encontrada"));
