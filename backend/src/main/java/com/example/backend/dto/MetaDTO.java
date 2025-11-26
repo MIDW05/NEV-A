@@ -11,6 +11,9 @@ import java.util.Date;
 public class MetaDTO {
     private Long id;
 
+    @NotNull(message = "El usuario es obligatorio")
+    private Long usuarioId;
+
     @NotNull(message = "El título no puede ser nulo")
     @Size(min = 3, max = 150, message = "El título debe tener entre 3 y 150 caracteres")
     private String titulo;

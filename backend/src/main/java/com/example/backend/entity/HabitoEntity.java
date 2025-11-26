@@ -14,6 +14,11 @@ public class HabitoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Nuevo: hábito perteneciente a un usuario
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private UsuarioEntity usuario;
+
     @NotNull(message = "El nombre del hábito no puede ser nulo")
     @Size(min = 3, max = 100, message = "El nombre debe tener entre 3 y 100 caracteres")
     @Column(nullable = false)

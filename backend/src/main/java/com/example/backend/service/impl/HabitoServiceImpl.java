@@ -2,8 +2,10 @@ package com.example.backend.service.impl;
 
 import com.example.backend.dto.HabitoDTO;
 import com.example.backend.entity.HabitoEntity;
+import com.example.backend.entity.UsuarioEntity;
 import com.example.backend.mapper.HabitoMapper;
 import com.example.backend.repository.HabitoRepository;
+import com.example.backend.repository.UsuarioRepository;
 import com.example.backend.service.HabitoService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,9 @@ public class HabitoServiceImpl implements HabitoService {
 
     @Autowired
     private HabitoRepository habitoRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private HabitoMapper habitoMapper;
@@ -37,6 +42,11 @@ public class HabitoServiceImpl implements HabitoService {
     @Transactional
     public HabitoDTO guardar(HabitoDTO habitoDTO) {
         HabitoEntity habitoEntity = habitoMapper.habitoDTOAHabitoEntity(habitoDTO);
+
+        UsuarioEntity usuario = usuarioRepository.findById(habitoDTO.getUsuarioId())
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+        habitoEntity.setUsuario(usuario);
+
         return habitoMapper.habitoEntityAHabitoDTO(habitoRepository.save(habitoEntity));
     }
 
@@ -49,9 +59,22 @@ public class HabitoServiceImpl implements HabitoService {
 
     @Override
     public HabitoDTO editar(HabitoDTO habitoDTO) {
-        HabitoEntity habitoEntity = habitoRepository.findById(habitoDTO.getId()).get();
+        HabitoEntity habitoEntity = habitoRepository.findById(habitoDTO.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Hábito no encontrado"));
+
         habitoEntity.setNombre(habitoDTO.getNombre());
-        HabitoDTO habitoDTO1 = habitoMapper.habitoEntityAHabitoDTO(habitoRepository.save(habitoEntity));
+
+        if (habitoDTO.getUsuarioId() != null &&
+                (habitoEntity.getUsuario() == null ||
+                        !habitoEntity.getUsuario().getId().equals(habitoDTO.getUsuarioId()))) {
+
+            UsuarioEntity usuario = usuarioRepository.findById(habitoDTO.getUsuarioId())
+                    .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+            habitoEntity.setUsuario(usuario);
+        }
+
+        HabitoDTO habitoDTO1 =
+                habitoMapper.habitoEntityAHabitoDTO(habitoRepository.save(habitoEntity));
         return habitoDTO1;
     }
 

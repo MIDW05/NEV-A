@@ -8,6 +8,9 @@ import lombok.Data;
 public class HabitoDTO {
     private Long id;
 
+    @NotNull(message = "El usuario es obligatorio")
+    private Long usuarioId;
+
     @NotNull(message = "El nombre del hábito no puede ser nulo")
     @Size(min = 3, max = 100, message = "El nombre debe tener entre 3 y 100 caracteres")
     private String nombre;

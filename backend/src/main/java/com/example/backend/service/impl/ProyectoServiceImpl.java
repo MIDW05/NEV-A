@@ -2,8 +2,10 @@ package com.example.backend.service.impl;
 
 import com.example.backend.dto.ProyectoDTO;
 import com.example.backend.entity.ProyectoEntity;
+import com.example.backend.entity.UsuarioEntity;
 import com.example.backend.mapper.ProyectoMapper;
 import com.example.backend.repository.ProyectoRepository;
+import com.example.backend.repository.UsuarioRepository;
 import com.example.backend.service.ProyectoService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -18,6 +20,9 @@ public class ProyectoServiceImpl implements ProyectoService {
 
     @Autowired
     private ProyectoRepository proyectoRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private ProyectoMapper proyectoMapper;
@@ -37,6 +42,11 @@ public class ProyectoServiceImpl implements ProyectoService {
     @Transactional
     public ProyectoDTO guardar(ProyectoDTO proyectoDTO) {
         ProyectoEntity proyectoEntity = proyectoMapper.proyectoDTOAProyectoEntity(proyectoDTO);
+
+        UsuarioEntity usuario = usuarioRepository.findById(proyectoDTO.getUsuarioId())
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+        proyectoEntity.setUsuario(usuario);
+
         return proyectoMapper.proyectoEntityAProyectoDTO(proyectoRepository.save(proyectoEntity));
     }
 
@@ -49,10 +59,23 @@ public class ProyectoServiceImpl implements ProyectoService {
 
     @Override
     public ProyectoDTO editar(ProyectoDTO proyectoDTO) {
-        ProyectoEntity proyectoEntity = proyectoRepository.findById(proyectoDTO.getId()).get();
+        ProyectoEntity proyectoEntity = proyectoRepository.findById(proyectoDTO.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Proyecto no encontrado"));
+
         proyectoEntity.setNombre(proyectoDTO.getNombre());
         proyectoEntity.setDescripcion(proyectoDTO.getDescripcion());
-        ProyectoDTO proyectoDTO1 = proyectoMapper.proyectoEntityAProyectoDTO(proyectoRepository.save(proyectoEntity));
+
+        if (proyectoDTO.getUsuarioId() != null &&
+                (proyectoEntity.getUsuario() == null ||
+                        !proyectoEntity.getUsuario().getId().equals(proyectoDTO.getUsuarioId()))) {
+
+            UsuarioEntity usuario = usuarioRepository.findById(proyectoDTO.getUsuarioId())
+                    .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+            proyectoEntity.setUsuario(usuario);
+        }
+
+        ProyectoDTO proyectoDTO1 =
+                proyectoMapper.proyectoEntityAProyectoDTO(proyectoRepository.save(proyectoEntity));
         return proyectoDTO1;
     }
 

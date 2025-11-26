@@ -14,6 +14,16 @@ public class NotaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Muchas notas pertenecen a un usuario
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private UsuarioEntity usuario;
+
+    // Una nota puede estar asociada a una tarea (opcional)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "tarea_id")
+    private TareaEntity tarea;
+
     @NotNull(message = "El título no puede ser nulo")
     @Size(min = 3, max = 150, message = "El título debe tener entre 3 y 150 caracteres")
     @Column(nullable = false)

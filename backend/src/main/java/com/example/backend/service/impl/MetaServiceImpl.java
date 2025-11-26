@@ -2,8 +2,10 @@ package com.example.backend.service.impl;
 
 import com.example.backend.dto.MetaDTO;
 import com.example.backend.entity.MetaEntity;
+import com.example.backend.entity.UsuarioEntity;
 import com.example.backend.mapper.MetaMapper;
 import com.example.backend.repository.MetaRepository;
+import com.example.backend.repository.UsuarioRepository;
 import com.example.backend.service.MetaService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,9 @@ public class MetaServiceImpl implements MetaService {
     @Autowired
     private MetaMapper metaMapper;
 
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
     @Override
     public List<MetaDTO> listar() {
         List<MetaEntity> metas = metaRepository.findAll();
@@ -37,6 +42,11 @@ public class MetaServiceImpl implements MetaService {
     @Transactional
     public MetaDTO guardar(MetaDTO metaDTO) {
         MetaEntity metaEntity = metaMapper.metaDTOAMetaEntity(metaDTO);
+
+        UsuarioEntity usuario = usuarioRepository.findById(metaDTO.getUsuarioId())
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+        metaEntity.setUsuario(usuario);
+
         return metaMapper.metaEntityAMetaDTO(metaRepository.save(metaEntity));
     }
 
@@ -48,12 +58,25 @@ public class MetaServiceImpl implements MetaService {
     }
 
     @Override
+    @Transactional
     public MetaDTO editar(MetaDTO metaDTO) {
-        MetaEntity metaEntity = metaRepository.findById(metaDTO.getId()).get();
+        MetaEntity metaEntity = metaRepository.findById(metaDTO.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Meta no encontrada"));
+
         metaEntity.setTitulo(metaDTO.getTitulo());
         metaEntity.setDescripcion(metaDTO.getDescripcion());
         metaEntity.setTipoMeta(metaDTO.getTipoMeta());
         metaEntity.setFechaLimite(metaDTO.getFechaLimite());
+
+        if (metaDTO.getUsuarioId() != null &&
+                (metaEntity.getUsuario() == null ||
+                        !metaEntity.getUsuario().getId().equals(metaDTO.getUsuarioId()))) {
+
+            UsuarioEntity usuario = usuarioRepository.findById(metaDTO.getUsuarioId())
+                    .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
+            metaEntity.setUsuario(usuario);
+        }
+
         MetaDTO metaDTO1 = metaMapper.metaEntityAMetaDTO(metaRepository.save(metaEntity));
         return metaDTO1;
     }
